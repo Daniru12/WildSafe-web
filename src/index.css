@@ -21,58 +21,115 @@
   }
 
   body {
-    @apply bg-background text-text font-outfit antialiased min-h-screen;
+    background-color: var(--background);
+    color: var(--text);
+    font-family: Outfit, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
     line-height: 1.5;
   }
 }
 
 @layer components {
   .glass-morphism {
-    @apply bg-surface/70 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl;
+    background-color: rgba(30, 41, 59, 0.7);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.6);
   }
 
   .btn-primary {
-    @apply bg-primary text-white py-3 px-6 rounded-lg font-semibold transition-all hover:bg-primary-dark hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 200ms ease;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px rgba(16,185,129,0.18);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .form-group {
-    @apply flex flex-col gap-2 mb-6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .input-field {
-    @apply bg-surface-light border border-border text-text py-3 px-4 rounded-lg w-full outline-none transition-colors focus:border-primary;
+    background-color: var(--surface-light);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+  }
+
+  .input-field:focus {
+    border-color: var(--primary);
   }
 
   .loading-state {
-    @apply text-center py-16 text-text-muted;
+    text-align: center;
+    padding: 4rem 0;
+    color: var(--text-muted);
   }
 
   .badge {
-    @apply bg-surface-light text-primary py-1 px-2 rounded font-bold text-xs uppercase;
+    background-color: var(--surface-light);
+    color: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
   }
 
   .status-badge {
-    @apply py-1 px-3 rounded-full text-xs font-bold;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
 
   .status-blue {
-    @apply bg-blue-500/20 text-blue-400;
+    background-color: rgba(59,130,246,0.2);
+    color: #60a5fa;
   }
 
   .status-orange {
-    @apply bg-amber-500/20 text-amber-400;
+    background-color: rgba(245,158,11,0.2);
+    color: #fb923c;
   }
 
   .status-purple {
-    @apply bg-purple-500/20 text-purple-400;
+    background-color: rgba(139,92,246,0.18);
+    color: #c084fc;
   }
 
   .status-green {
-    @apply bg-emerald-500/20 text-emerald-400;
+    background-color: rgba(16,185,129,0.18);
+    color: #34d399;
   }
 
   .status-gray {
-    @apply bg-slate-500/20 text-slate-400;
+    background-color: rgba(100,116,139,0.18);
+    color: #94a3b8;
   }
 }
 
