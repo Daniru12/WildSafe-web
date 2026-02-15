@@ -5,8 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from './NotificationDropdown';
 import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, Info, User, Plus, Settings } from 'lucide-react';
 
-import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, Info, User } from 'lucide-react';
-
 
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
