@@ -96,6 +96,7 @@ function App() {
             }
           />
 
+
           <Route
             path="/case-management"
             element={
@@ -122,6 +123,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
