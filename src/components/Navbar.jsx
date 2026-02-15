@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, Info, User } from 'lucide-react';
+
+import NotificationDropdown from './NotificationDropdown';
+import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, Info, User, Plus, Settings } from 'lucide-react';
+
 
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
@@ -42,14 +45,38 @@ const Navbar = () => {
                                 <span>Dashboard</span>
                             </Link>
 
+
                             {user?.role === 'CITIZEN' && (
-                                <Link to="/report" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
-                                    <FileText size={18} />
-                                    <span>Tokenize</span>
-                                </Link>
+                                <>
+                                    <Link to="/threat-report" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <Plus size={18} />
+                                        <span>Report Threat</span>
+                                    </Link>
+                                    <Link to="/report" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <FileText size={18} />
+                                        <span>Report Incident</span>
+                                    </Link>
+                                </>
+                            )}
+
+                            {['OFFICER', 'ADMIN'].includes(user?.role) && (
+                                <>
+                                    <Link to="/case-management" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <Shield size={18} />
+                                        <span>Case Management</span>
+                                    </Link>
+                                    <Link to="/analytics" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <BarChart3 size={18} />
+                                        <span>Analytics</span>
+                                    </Link>
+                                </>
                             )}
 
                             <div className="flex items-center gap-4 pt-4 border-t border-border md:pt-0 md:border-t-0 md:pl-6 md:ml-2 md:border-l">
+                                {['OFFICER', 'ADMIN'].includes(user?.role) && (
+                                    <NotificationDropdown />
+                                )}
+
                                 <Link to="/profile" className="flex items-center gap-2 hover:text-primary transition-colors">
                                     <User size={18} />
                                     <span className="font-semibold text-sm">{user?.name}</span>
