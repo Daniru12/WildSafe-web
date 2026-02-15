@@ -28,9 +28,9 @@ const Login = () => {
         <div className="relative min-h-screen overflow-hidden bg-black">
             {/* Fullscreen Nature Background */}
             <div className="absolute inset-0">
-                <img 
-                    src="https://images.unsplash.com/photo-1546182990-dffeafbe841d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
-                    alt="Wildlife Conservation" 
+                <img
+                    src="https://images.unsplash.com/photo-1546182990-dffeafbe841d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+                    alt="Wildlife Conservation"
                     className="object-cover w-full h-full opacity-60"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
@@ -59,7 +59,7 @@ const Login = () => {
             <div className="relative flex items-center min-h-screen">
                 <div className="container px-6 mx-auto lg:px-12">
                     <div className="flex flex-col gap-12 lg:flex-row lg:items-center lg:justify-between">
-                        
+
                         {/* Left Side - Brand Story */}
                         <div className="space-y-8 lg:w-1/2">
                             {/* Logo with Wildlife Silhouette */}
@@ -72,36 +72,36 @@ const Login = () => {
                                 </div>
                                 <div>
                                     <h1 className="text-4xl font-bold tracking-tight text-white">
-                                        Wild<span className="text-amber-500">Guard</span>
+                                        Wild<span className="text-primary">Asset</span>
                                     </h1>
-                                    <p className="text-sm text-white/60">Est. 2024</p>
+                                    <p className="text-sm text-white/60">Blockchain Protocol</p>
                                 </div>
                             </div>
 
                             {/* Hero Quote */}
                             <div className="space-y-4">
                                 <div className="relative">
-                                    <span className="absolute text-8xl text-amber-500/20 -top-8 -left-4">"</span>
+                                    <span className="absolute text-8xl text-primary/20 -top-8 -left-4">"</span>
                                     <p className="relative pl-6 text-3xl italic font-light leading-relaxed text-white lg:text-4xl">
-                                        In the end, we will conserve only what we love, we will love only what we understand, and we will understand only what we are taught.
+                                        Real-world assets meet decentralized finance. Protecting biodiversity through transparent tokenization.
                                     </p>
                                 </div>
-                                <p className="pl-6 text-lg text-white/60">— Baba Dioum, Conservationist</p>
+                                <p className="pl-6 text-lg text-white/60">— WildAsset Manifesto</p>
                             </div>
 
                             {/* Impact Stats - Minimal */}
                             <div className="flex gap-12 pl-6">
                                 <div>
-                                    <div className="text-3xl font-bold text-amber-500">125+</div>
-                                    <div className="mt-1 text-sm tracking-wider uppercase text-white/50">Active Reserves</div>
+                                    <div className="text-3xl font-bold text-primary">$45M+</div>
+                                    <div className="mt-1 text-sm tracking-wider uppercase text-white/50">Assets Tokenized</div>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-bold text-amber-500">50k+</div>
-                                    <div className="mt-1 text-sm tracking-wider uppercase text-white/50">Conservationists</div>
+                                    <div className="text-3xl font-bold text-primary">12k+</div>
+                                    <div className="mt-1 text-sm tracking-wider uppercase text-white/50">Global Holders</div>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-bold text-amber-500">1.2k</div>
-                                    <div className="mt-1 text-sm tracking-wider uppercase text-white/50">Species Saved</div>
+                                    <div className="text-3xl font-bold text-primary">0%</div>
+                                    <div className="mt-1 text-sm tracking-wider uppercase text-white/50">Fee Protocol</div>
                                 </div>
                             </div>
 
@@ -123,13 +123,13 @@ const Login = () => {
                             {/* Decorative Elements */}
                             <div className="absolute w-32 h-32 rounded-full -top-6 -right-6 bg-amber-500/10 blur-2xl" />
                             <div className="absolute w-32 h-32 rounded-full -bottom-6 -left-6 bg-emerald-500/10 blur-2xl" />
-                            
+
                             {/* Main Card */}
                             <div className="relative overflow-hidden border shadow-2xl bg-white/10 backdrop-blur-xl rounded-3xl border-white/20">
-                                
+
                                 {/* Card Header with Nature Pattern */}
                                 <div className="relative h-32 overflow-hidden bg-gradient-to-r from-amber-500/20 to-emerald-500/20">
-                                    <div className="absolute inset-0" 
+                                    <div className="absolute inset-0"
                                         style={{
                                             backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)',
                                             backgroundSize: '24px 24px'
@@ -186,7 +186,7 @@ const Login = () => {
                                                 <label className="block text-sm font-medium text-white/80">
                                                     Password
                                                 </label>
-                                                <button 
+                                                <button
                                                     type="button"
                                                     className="text-xs transition-colors text-amber-400 hover:text-amber-300"
                                                 >
@@ -266,8 +266,8 @@ const Login = () => {
                                         {/* Sign Up Link */}
                                         <p className="pt-4 mt-6 text-sm text-center border-t text-white/60 border-white/10">
                                             New to WildGuard?{' '}
-                                            <Link 
-                                                to="/register" 
+                                            <Link
+                                                to="/register"
                                                 className="inline-flex items-center gap-1 font-medium text-amber-400 hover:text-amber-300 group"
                                             >
                                                 Join the mission
