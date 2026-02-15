@@ -77,17 +77,6 @@ const Navbar = () => {
                                     <NotificationDropdown />
                                 )}
 
-
-
-                            {user?.role === 'CITIZEN' && (
-                                <Link to="/report" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
-                                    <FileText size={18} />
-                                    <span>Tokenize</span>
-                                </Link>
-                            )}
-
-                            <div className="flex items-center gap-4 pt-4 border-t border-border md:pt-0 md:border-t-0 md:pl-6 md:ml-2 md:border-l">
-
                                 <Link to="/profile" className="flex items-center gap-2 hover:text-primary transition-colors">
                                     <User size={18} />
                                     <span className="font-semibold text-sm">{user?.name}</span>
