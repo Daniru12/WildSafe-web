@@ -9,6 +9,10 @@ import Register from './pages/Register';
 import CitizenDashboard from './pages/CitizenDashboard';
 import OfficerDashboard from './pages/OfficerDashboard';
 import ReportIncident from './pages/ReportIncident';
+import ThreatReport from './pages/ThreatReport';
+import CaseManagement from './pages/CaseManagement';
+import CaseDetails from './pages/CaseDetails';
+import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
 
 // Protected Route Component
@@ -75,10 +79,46 @@ function App() {
           />
 
           <Route
+            path="/threat-report"
+            element={
+              <ProtectedRoute roles={['CITIZEN']}>
+                <ThreatReport />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/analytics"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/case-management"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <CaseManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/cases/:caseId"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <CaseDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <NotificationCenter />
               </ProtectedRoute>
             }
           />
