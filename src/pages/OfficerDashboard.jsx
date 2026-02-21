@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 import { Filter, Search, CheckCircle, Clock, AlertTriangle, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const OfficerDashboard = () => {
+    const { user } = useAuth();
     const [incidents, setIncidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
@@ -11,7 +13,6 @@ const OfficerDashboard = () => {
         category: ''
     });
 
-    
     const fetchIncidents = async () => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
@@ -54,6 +55,11 @@ const OfficerDashboard = () => {
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold mb-2">Management Dashboard</h1>
                     <p className="text-text-muted">Track and manage all environmental incidents reported by citizens.</p>
+                    {user && (
+                        <div className="mt-2 p-2 bg-blue-500/10 rounded">
+                            <small>Logged in as: {user.name} ({user.role})</small>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mb-8 p-6 glass-morphism">
