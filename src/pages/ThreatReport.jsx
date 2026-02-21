@@ -73,8 +73,8 @@ const ThreatReport = () => {
                     address: address || 'Selected Location'
                 },
                 media: media.map(file => ({
-                    type: file.type.startsWith('image/') ? 'IMAGE' : 'VIDEO',
-                    url: file.url || URL.createObjectURL(file)
+                    url: file.url || URL.createObjectURL(file),
+                    mediaType: file.type.startsWith('image/') ? 'IMAGE' : 'VIDEO'
                 }))
             };
 
