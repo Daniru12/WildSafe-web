@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 import NotificationDropdown from './NotificationDropdown';
-import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, Info, User, Plus, Settings } from 'lucide-react';
+import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Users, Package } from 'lucide-react';
 
 
 const Navbar = () => {
@@ -65,11 +65,22 @@ const Navbar = () => {
                                         <Shield size={18} />
                                         <span>Case Management</span>
                                     </Link>
+                                    <Link to="/resources" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <Package size={18} />
+                                        <span>Resources</span>
+                                    </Link>
                                     <Link to="/analytics" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
                                         <BarChart3 size={18} />
                                         <span>Analytics</span>
                                     </Link>
                                 </>
+                            )}
+
+                            {user?.role === 'ADMIN' && (
+                                <Link to="/staff" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                    <Users size={18} />
+                                    <span>Staff</span>
+                                </Link>
                             )}
 
                             <div className="flex items-center gap-4 pt-4 border-t border-border md:pt-0 md:border-t-0 md:pl-6 md:ml-2 md:border-l">

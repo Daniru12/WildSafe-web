@@ -14,6 +14,8 @@ import CaseManagement from './pages/CaseManagement';
 import CaseDetails from './pages/CaseDetails';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
+import StaffManagement from './pages/StaffManagement';
+import ResourceManagement from './pages/ResourceManagement';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, roles }) => {
@@ -120,6 +122,24 @@ function App() {
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
                 <NotificationCenter />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/staff"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <StaffManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resources"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <ResourceManagement />
               </ProtectedRoute>
             }
           />
