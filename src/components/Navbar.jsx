@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 import NotificationDropdown from './NotificationDropdown';
-import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Users, Package } from 'lucide-react';
+import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Package } from 'lucide-react';
 
 
 const Navbar = () => {
@@ -17,6 +17,9 @@ const Navbar = () => {
     };
 
     const toggleMenu = () => setIsOpen(!isOpen);
+
+    // Admins use the sidebar layout — don't render the full navbar for them
+    if (isAuthenticated && user?.role === 'ADMIN') return null;
 
     return (
         <nav className="sticky top-4 mx-4 px-8 py-3 z-50 flex justify-center glass-morphism">
@@ -45,7 +48,6 @@ const Navbar = () => {
                                 <span>Dashboard</span>
                             </Link>
 
-
                             {user?.role === 'CITIZEN' && (
                                 <>
                                     <Link to="/threat-report" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
@@ -59,7 +61,7 @@ const Navbar = () => {
                                 </>
                             )}
 
-                            {['OFFICER', 'ADMIN'].includes(user?.role) && (
+                            {user?.role === 'OFFICER' && (
                                 <>
                                     <Link to="/case-management" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
                                         <Shield size={18} />
@@ -76,15 +78,8 @@ const Navbar = () => {
                                 </>
                             )}
 
-                            {user?.role === 'ADMIN' && (
-                                <Link to="/staff" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
-                                    <Users size={18} />
-                                    <span>Staff</span>
-                                </Link>
-                            )}
-
                             <div className="flex items-center gap-4 pt-4 border-t border-border md:pt-0 md:border-t-0 md:pl-6 md:ml-2 md:border-l">
-                                {['OFFICER', 'ADMIN'].includes(user?.role) && (
+                                {user?.role === 'OFFICER' && (
                                     <NotificationDropdown />
                                 )}
 
