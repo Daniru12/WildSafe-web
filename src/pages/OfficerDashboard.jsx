@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
-import { Filter, Search, CheckCircle, Clock, AlertTriangle, User, Trash2 } from 'lucide-react';
+import { Filter, Search, CheckCircle, Clock, AlertTriangle, User, Trash2, TrendingUp, MapPin, Activity, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const OfficerDashboard = () => {
@@ -10,11 +10,13 @@ const OfficerDashboard = () => {
     const [threatReports, setThreatReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingThreats, setLoadingThreats] = useState(true);
+    const [loadingPredictions, setLoadingPredictions] = useState(true);
     const [activeTab, setActiveTab] = useState('incidents');
     const [filters, setFilters] = useState({
         status: '',
         category: ''
     });
+    const [predictiveInsights, setPredictiveInsights] = useState(null);
 
     const fetchIncidents = async () => {
         try {
@@ -39,6 +41,17 @@ const OfficerDashboard = () => {
         }
     };
 
+    const fetchPredictiveInsights = async () => {
+        try {
+            const res = await api.get('/analytics/predictive/insights');
+            setPredictiveInsights(res.data);
+        } catch (err) {
+            console.error('Failed to fetch predictive insights', err);
+        } finally {
+            setLoadingPredictions(false);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === 'incidents') {
             fetchIncidents();
@@ -48,6 +61,12 @@ const OfficerDashboard = () => {
     useEffect(() => {
         if (activeTab === 'threats') {
             fetchThreatReports();
+        }
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 'predictions') {
+            fetchPredictiveInsights();
         }
     }, [activeTab]);
 
@@ -131,6 +150,16 @@ const OfficerDashboard = () => {
                             }`}
                         >
                             Threat Reports
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('predictions')}
+                            className={`pb-3 px-1 font-medium transition-colors ${
+                                activeTab === 'predictions'
+                                    ? 'text-white border-b-2 border-primary'
+                                    : 'text-text-muted hover:text-white'
+                            }`}
+                        >
+                            🧠 Predictions
                         </button>
                     </div>
                 </div>
@@ -307,6 +336,190 @@ const OfficerDashboard = () => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {activeTab === 'predictions' && (
+                    <div className="space-y-8">
+                        {loadingPredictions ? (
+                            <div className="flex items-center justify-center h-64">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                            </div>
+                        ) : predictiveInsights ? (
+                            <>
+                                {/* Risk Level Card */}
+                                <div className="p-6 glass-morphism">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <Shield size={24} className="text-primary" />
+                                            Current Risk Assessment
+                                        </h3>
+                                        <span className={`px-4 py-2 rounded-full font-semibold ${
+                                            predictiveInsights.riskLevel === 'CRITICAL' ? 'bg-red-500/20 text-red-300' :
+                                            predictiveInsights.riskLevel === 'HIGH' ? 'bg-orange-500/20 text-orange-300' :
+                                            predictiveInsights.riskLevel === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-300' :
+                                            'bg-green-500/20 text-green-300'
+                                        }`}>
+                                            {predictiveInsights.riskLevel}
+                                        </span>
+                                    </div>
+                                    <p className="text-text-muted">
+                                        Based on recent incident patterns and trends
+                                    </p>
+                                </div>
+
+                                {/* Forecast Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="p-6 glass-morphism">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <TrendingUp size={20} className="text-blue-500" />
+                                            <h4 className="font-semibold">7-Day Forecast</h4>
+                                        </div>
+                                        <p className="text-2xl font-bold mb-2">
+                                            {predictiveInsights.forecast?.next7Days || 0} incidents
+                                        </p>
+                                        <p className="text-sm text-text-muted">
+                                            Trend: {predictiveInsights.forecast?.trend || 'STABLE'}
+                                        </p>
+                                        <p className="text-xs text-text-muted mt-2">
+                                            Confidence: {predictiveInsights.forecast?.confidence || 'LOW'}
+                                        </p>
+                                    </div>
+
+                                    <div className="p-6 glass-morphism">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Activity size={20} className="text-purple-500" />
+                                            <h4 className="font-semibold">Current Activity</h4>
+                                        </div>
+                                        <p className="text-2xl font-bold mb-2">
+                                            {predictiveInsights.currentStats?.totalIncidents || 0}
+                                        </p>
+                                        <p className="text-sm text-text-muted">
+                                            Last 30 days
+                                        </p>
+                                        <p className="text-xs text-text-muted mt-2">
+                                            Daily avg: {predictiveInsights.currentStats?.dailyAverage || 0}
+                                        </p>
+                                    </div>
+
+                                    <div className="p-6 glass-morphism">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <MapPin size={20} className="text-green-500" />
+                                            <h4 className="font-semibold">Top Category</h4>
+                                        </div>
+                                        <p className="text-lg font-bold mb-2 capitalize">
+                                            {Object.keys(predictiveInsights.currentStats?.categoryBreakdown || {})[0]?.replace('_', ' ') || 'N/A'}
+                                        </p>
+                                        <p className="text-sm text-text-muted">
+                                            Most frequent incident type
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* AI Insights */}
+                                {predictiveInsights.aiAnalysis && (
+                                    <div className="p-6 glass-morphism border border-primary/20">
+                                        <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                                🧠
+                                            </div>
+                                            AI-Powered Insights
+                                        </h3>
+                                        <div className="bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-sm p-6 rounded-xl border border-white/10 shadow-lg">
+                                            <div className="space-y-4">
+                                                {(() => {
+                                                    try {
+                                                        const aiData = JSON.parse(predictiveInsights.aiAnalysis);
+                                                        return (
+                                                            <>
+                                                                {aiData.forecast && (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-blue-300 mb-1">7-Day Forecast</p>
+                                                                            <p className="text-sm text-text-muted">{aiData.forecast}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {aiData.highRiskTypes && aiData.highRiskTypes.length > 0 && (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-orange-300 mb-1">High-Risk Types</p>
+                                                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                                                {aiData.highRiskTypes.map((risk, index) => (
+                                                                                    <span key={index} className="px-2 py-1 bg-orange-500/20 text-orange-300 rounded text-xs">
+                                                                                        {risk.replace('_', ' ')}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {aiData.precautions && (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-yellow-300 mb-1">Recommended Precautions</p>
+                                                                            <p className="text-sm text-text-muted">{aiData.precautions}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {aiData.riskLevel && (
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-red-300 mb-1">Risk Level</p>
+                                                                            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                                                                                aiData.riskLevel === 'LOW' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
+                                                                                aiData.riskLevel === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' :
+                                                                                aiData.riskLevel === 'HIGH' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                                                                                aiData.riskLevel === 'CRITICAL' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
+                                                                                'bg-gray-500/20 text-gray-300 border-gray-500/30'
+                                                                            }`}>
+                                                                                {aiData.riskLevel}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    } catch (err) {
+                                                        // Fallback for non-JSON responses
+                                                        return (
+                                                            <div className="text-sm text-text-muted whitespace-pre-wrap">
+                                                                {predictiveInsights.aiAnalysis}
+                                                            </div>
+                                                        );
+                                                    }
+                                                })()}
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 flex items-center gap-2 text-xs text-text-muted">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                            <span>Powered by OpenAI GPT-3.5</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Category Breakdown */}
+                                <div className="p-6 glass-morphism">
+                                    <h3 className="text-xl font-bold mb-4">Incident Categories (Last 30 Days)</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {Object.entries(predictiveInsights.currentStats?.categoryBreakdown || {}).map(([category, count]) => (
+                                            <div key={category} className="flex justify-between items-center p-3 bg-surface/50 rounded">
+                                                <span className="capitalize">{category.replace('_', ' ')}</span>
+                                                <span className="font-bold">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center py-12">
+                                <p className="text-text-muted">No predictive data available</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
