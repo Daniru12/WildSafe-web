@@ -14,7 +14,10 @@ import {
   Search,
   Calendar,
   ArrowUpRight,
-  Users
+  Users,
+  Plus,
+  Save,
+  X
 } from 'lucide-react';
 
 const CaseManagement = () => {
@@ -22,11 +25,23 @@ const CaseManagement = () => {
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [officers, setOfficers] = useState([]);
+    const [threatReports, setThreatReports] = useState([]);
     const [filters, setFilters] = useState({
         status: '',
         priority: '',
         threatType: '',
         search: ''
+    });
+    const [newCase, setNewCase] = useState({
+        threatReportId: '',
+        threatType: 'POACHING',
+        location: { lat: 0, lng: 0, address: '' },
+        reporterInfo: { name: '', email: '', phone: '', isAnonymous: false },
+        dateTime: new Date().toISOString().slice(0, 16),
+        priority: 'MEDIUM',
+        assignedOfficer: ''
     });
     const [stats, setStats] = useState({
         total: 0,
@@ -38,7 +53,69 @@ const CaseManagement = () => {
     useEffect(() => {
         fetchCases();
         fetchStats();
+        fetchOfficers();
+        fetchThreatReports();
     }, []);
+
+    const fetchOfficers = async () => {
+        try {
+            const response = await api.get('/auth/users');
+            const officers = response.data.filter(user => user.role === 'OFFICER');
+            setOfficers(officers || []);
+        } catch (err) {
+            console.error('Failed to fetch officers:', err);
+        }
+    };
+
+    const fetchThreatReports = async () => {
+        try {
+            const response = await api.get('/threat-reports');
+            setThreatReports(response.data.reports || []);
+        } catch (err) {
+            console.error('Failed to fetch threat reports:', err);
+        }
+    };
+
+    const handleThreatReportChange = async (reportId) => {
+        setNewCase({ ...newCase, threatReportId: reportId });
+        
+        if (reportId) {
+            try {
+                const response = await api.get(`/threat-reports/${reportId}`);
+                const report = response.data;
+                if (report && report.location) {
+                    setNewCase(prev => ({
+                        ...prev,
+                        threatReportId: reportId,
+                        location: report.location,
+                        threatType: report.threatType || prev.threatType,
+                        dateTime: report.dateTime ? new Date(report.dateTime).toISOString().slice(0, 16) : prev.dateTime,
+                        reporterInfo: report.reporterInfo || prev.reporterInfo
+                    }));
+                }
+            } catch (err) {
+                console.error('Failed to fetch threat report details:', err);
+                if (err.response?.status === 404) {
+                    console.warn('Threat report not found, it may have been deleted');
+                    // Don't reset the form, just show a warning
+                    setError('Selected threat report not found. It may have been deleted.');
+                    setTimeout(() => setError(null), 3000);
+                } else {
+                    console.error('Error fetching threat report:', err);
+                }
+            }
+        } else {
+            // Reset form fields when no report is selected
+            setNewCase(prev => ({
+                ...prev,
+                threatReportId: '',
+                location: { lat: 0, lng: 0, address: '' },
+                reporterInfo: { name: '', email: '', phone: '', isAnonymous: false },
+                dateTime: new Date().toISOString().slice(0, 16),
+                threatType: 'POACHING'
+            }));
+        }
+    };
 
     const fetchCases = async () => {
         try {
@@ -91,6 +168,77 @@ const CaseManagement = () => {
             search: ''
         });
         setTimeout(fetchCases, 0);
+    };
+
+    const handleCreateCase = async () => {
+        try {
+            console.log('Creating case with data:', newCase);
+            console.log('Auth token:', localStorage.getItem('token'));
+            
+            // If threat report is selected, fetch its details to get location and reporter info
+            if (newCase.threatReportId) {
+                try {
+                    const reportResponse = await api.get(`/threat-reports/${newCase.threatReportId}`);
+                    const report = reportResponse.data;
+                    
+                    // Update case data with report details
+                    const caseData = {
+                        ...newCase,
+                        location: report.location || newCase.location,
+                        reporterInfo: report.reporterInfo || newCase.reporterInfo,
+                        dateTime: report.dateTime ? new Date(report.dateTime).toISOString().slice(0, 16) : newCase.dateTime,
+                        threatType: report.threatType || newCase.threatType
+                    };
+                    
+                    console.log('Updated case data with report details:', caseData);
+                    const response = await api.post('/cases', caseData);
+                    console.log('Case created successfully:', response.data);
+                    
+                    setCases([response.data.case, ...cases]);
+                    setShowCreateForm(false);
+                    resetNewCaseForm();
+                    fetchStats();
+                } catch (reportError) {
+                    console.error('Error fetching threat report details:', reportError);
+                    if (reportError.response?.status === 404) {
+                        setError('Selected threat report not found. Please select a different report or create case without report.');
+                        return;
+                    }
+                    // If we can't fetch report details due to other errors, proceed with original data
+                    const response = await api.post('/cases', newCase);
+                    console.log('Case created successfully:', response.data);
+                    
+                    setCases([response.data.case, ...cases]);
+                    setShowCreateForm(false);
+                    resetNewCaseForm();
+                    fetchStats();
+                }
+            } else {
+                // No threat report selected, proceed with original data
+                const response = await api.post('/cases', newCase);
+                console.log('Case created successfully:', response.data);
+                
+                setCases([response.data.case, ...cases]);
+                setShowCreateForm(false);
+                resetNewCaseForm();
+                fetchStats();
+            }
+        } catch (err) {
+            console.error('Error creating case:', err.response?.data || err.message);
+            setError(err.response?.data?.message || 'Failed to create case');
+        }
+    };
+
+    const resetNewCaseForm = () => {
+        setNewCase({
+            threatReportId: '',
+            threatType: 'POACHING',
+            location: { lat: 0, lng: 0, address: '' },
+            reporterInfo: { name: '', email: '', phone: '', isAnonymous: false },
+            dateTime: new Date().toISOString().slice(0, 16),
+            priority: 'MEDIUM',
+            assignedOfficer: ''
+        });
     };
 
     const getStatusColor = (status) => {
@@ -148,8 +296,19 @@ const CaseManagement = () => {
             <Navbar />
             <main className="max-w-7xl mx-auto px-6 mt-12 animate-fade-in">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-2">Case Management</h1>
-                    <p className="text-text-muted">Manage and track wildlife threat cases</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-4xl font-bold mb-2">Case Management</h1>
+                            <p className="text-text-muted">Manage and track wildlife threat cases</p>
+                        </div>
+                        <button
+                            onClick={() => setShowCreateForm(true)}
+                            className="flex items-center gap-2 btn-primary"
+                        >
+                            <Plus size={20} />
+                            <span>File New Case</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
@@ -372,6 +531,190 @@ const CaseManagement = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Create Case Modal */}
+                {showCreateForm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold">File New Case</h2>
+                                <button
+                                    onClick={() => setShowCreateForm(false)}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Threat Report</label>
+                                        <select
+                                            className="input-field"
+                                            value={newCase.threatReportId}
+                                            onChange={(e) => handleThreatReportChange(e.target.value)}
+                                        >
+                                            <option value="">Select Threat Report</option>
+                                            {threatReports.map(report => (
+                                                <option key={report._id} value={report._id}>
+                                                    {report.reportId} - {report.threatType}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Threat Type</label>
+                                        <select
+                                            className="input-field"
+                                            value={newCase.threatType}
+                                            onChange={(e) => setNewCase({ ...newCase, threatType: e.target.value })}
+                                        >
+                                            <option value="POACHING">Poaching</option>
+                                            <option value="FOREST_FIRE">Forest Fire</option>
+                                            <option value="INJURED_ANIMAL">Injured Animal</option>
+                                            <option value="ILLEGAL_LOGGING">Illegal Logging</option>
+                                            <option value="HUMAN_WILDLIFE_CONFLICT">Human-Wildlife Conflict</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="text-sm font-medium text-text-muted">Location Address</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        placeholder="Enter location address"
+                                        value={newCase.location.address}
+                                        onChange={(e) => setNewCase({ 
+                                            ...newCase, 
+                                            location: { ...newCase.location, address: e.target.value }
+                                        })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Date & Time</label>
+                                        <input
+                                            type="datetime-local"
+                                            className="input-field"
+                                            value={newCase.dateTime}
+                                            onChange={(e) => setNewCase({ ...newCase, dateTime: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Priority</label>
+                                        <select
+                                            className="input-field"
+                                            value={newCase.priority}
+                                            onChange={(e) => setNewCase({ ...newCase, priority: e.target.value })}
+                                        >
+                                            <option value="LOW">Low</option>
+                                            <option value="MEDIUM">Medium</option>
+                                            <option value="HIGH">High</option>
+                                            <option value="CRITICAL">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="text-sm font-medium text-text-muted">Assign Officer</label>
+                                    <select
+                                        className="input-field"
+                                        value={newCase.assignedOfficer}
+                                        onChange={(e) => setNewCase({ ...newCase, assignedOfficer: e.target.value })}
+                                    >
+                                        <option value="">Select Officer (Optional)</option>
+                                        {officers.map(officer => (
+                                            <option key={officer._id} value={officer._id}>
+                                                {officer.name} - {officer.email}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Reporter Name</label>
+                                        <input
+                                            type="text"
+                                            className="input-field"
+                                            placeholder="Optional"
+                                            value={newCase.reporterInfo.name}
+                                            onChange={(e) => setNewCase({ 
+                                                ...newCase, 
+                                                reporterInfo: { ...newCase.reporterInfo, name: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Reporter Email</label>
+                                        <input
+                                            type="email"
+                                            className="input-field"
+                                            placeholder="Optional"
+                                            value={newCase.reporterInfo.email}
+                                            onChange={(e) => setNewCase({ 
+                                                ...newCase, 
+                                                reporterInfo: { ...newCase.reporterInfo, email: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-text-muted">Reporter Phone</label>
+                                        <input
+                                            type="tel"
+                                            className="input-field"
+                                            placeholder="Optional"
+                                            value={newCase.reporterInfo.phone}
+                                            onChange={(e) => setNewCase({ 
+                                                ...newCase, 
+                                                reporterInfo: { ...newCase.reporterInfo, phone: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="anonymous"
+                                        checked={newCase.reporterInfo.isAnonymous}
+                                        onChange={(e) => setNewCase({ 
+                                            ...newCase, 
+                                            reporterInfo: { ...newCase.reporterInfo, isAnonymous: e.target.checked }
+                                        })}
+                                    />
+                                    <label htmlFor="anonymous" className="text-sm text-text-muted">
+                                        Anonymous reporter
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowCreateForm(false)}
+                                    className="px-4 py-2 border border-border rounded-lg hover:bg-surface-light transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCreateCase}
+                                    className="flex items-center gap-2 btn-primary"
+                                >
+                                    <Save size={16} />
+                                    <span>File Case</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
