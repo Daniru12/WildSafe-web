@@ -28,7 +28,7 @@ const NotificationDropdown = () => {
 
     const fetchUnreadCount = async () => {
         try {
-            const response = await api.get('/notifications/unread-count');
+            const response = await api.get('/notifications/stats');
             setUnreadCount(response.data.unreadCount || 0);
         } catch (err) {
             console.error('Failed to fetch unread count:', err);
