@@ -60,7 +60,7 @@ const NotificationDropdown = () => {
         try {
             await api.put(`/notifications/${notificationId}/read`);
             setNotifications(notifications.map(notif => 
-                notif._id === notificationId ? { ...notif, read: true } : notif
+                notif._id === notificationId ? { ...notif, isRead: true } : notif
             ));
             setUnreadCount(Math.max(0, unreadCount - 1));
         } catch (err) {
@@ -69,7 +69,7 @@ const NotificationDropdown = () => {
     };
 
     const handleNotificationClick = (notification) => {
-        if (!notification.read) {
+        if (!notification.isRead) {
             markAsRead(notification._id);
         }
         
@@ -84,7 +84,7 @@ const NotificationDropdown = () => {
     const markAllAsRead = async () => {
         try {
             await api.put('/notifications/read-all');
-            setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+            setNotifications(notifications.map(notif => ({ ...notif, isRead: true })));
             setUnreadCount(0);
         } catch (err) {
             console.error('Failed to mark all as read:', err);
@@ -188,7 +188,7 @@ const NotificationDropdown = () => {
                                             key={notification._id}
                                             onClick={() => handleNotificationClick(notification)}
                                             className={`p-4 hover:bg-surface-light transition-colors cursor-pointer ${
-                                                !notification.read ? 'bg-blue-500/5' : ''
+                                                !notification.isRead ? 'bg-blue-500/5' : ''
                                             }`}
                                         >
                                             <div className="flex items-start gap-3">
@@ -197,7 +197,7 @@ const NotificationDropdown = () => {
                                                 </div>
                                                 
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-sm ${!notification.read ? 'font-semibold' : ''} line-clamp-2`}>
+                                                    <p className={`text-sm ${!notification.isRead ? 'font-semibold' : ''} line-clamp-2`}>
                                                         {notification.message}
                                                     </p>
                                                     
@@ -206,7 +206,7 @@ const NotificationDropdown = () => {
                                                             {formatTime(notification.sentAt)}
                                                         </span>
                                                         
-                                                        {!notification.read && (
+                                                        {!notification.isRead && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
