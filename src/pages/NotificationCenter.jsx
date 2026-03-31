@@ -34,7 +34,7 @@ const NotificationCenter = () => {
         try {
             setLoading(true);
             const params = new URLSearchParams();
-            if (filter === 'unread') params.append('unreadOnly', 'true');
+            if (filter === 'unread') params.append('isRead', 'false');
             
             const response = await api.get(`/notifications?${params.toString()}`);
             setNotifications(response.data.notifications || []);
@@ -48,7 +48,7 @@ const NotificationCenter = () => {
     const fetchUnreadCount = async () => {
         try {
             const response = await api.get('/notifications/unread-count');
-            setUnreadCount(response.data.unreadCount || 0);
+            setUnreadCount(response.data.count || 0);
         } catch (err) {
             console.error('Failed to fetch unread count:', err);
         }
@@ -67,7 +67,7 @@ const NotificationCenter = () => {
         try {
             await api.put(`/notifications/${notificationId}/read`);
             setNotifications(notifications.map(notif => 
-                notif._id === notificationId ? { ...notif, read: true } : notif
+                notif._id === notificationId ? { ...notif, isRead: true } : notif
             ));
             fetchUnreadCount();
             fetchStats();
@@ -79,7 +79,7 @@ const NotificationCenter = () => {
     const markAllAsRead = async () => {
         try {
             await api.put('/notifications/read-all');
-            setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+            setNotifications(notifications.map(notif => ({ ...notif, isRead: true })));
             setUnreadCount(0);
             fetchStats();
         } catch (err) {
@@ -99,7 +99,7 @@ const NotificationCenter = () => {
     };
 
     const handleNotificationClick = (notification) => {
-        if (!notification.read) {
+        if (!notification.isRead) {
             markAsRead(notification._id);
         }
         
@@ -286,7 +286,7 @@ const NotificationCenter = () => {
                                 <div
                                     key={notification._id}
                                     className={`p-6 hover:bg-surface-light transition-colors cursor-pointer ${
-                                        !notification.read ? 'bg-blue-500/5' : ''
+                                        !notification.isRead ? 'bg-blue-500/5' : ''
                                     }`}
                                     onClick={() => handleNotificationClick(notification)}
                                 >
@@ -298,7 +298,7 @@ const NotificationCenter = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex-1">
-                                                    <p className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
+                                                    <p className={`text-sm ${!notification.isRead ? 'font-semibold' : ''}`}>
                                                         {notification.message}
                                                     </p>
                                                     {notification.caseId && (
@@ -308,7 +308,7 @@ const NotificationCenter = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                                                    {!notification.read && (
+                                                    {!notification.isRead && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -336,10 +336,10 @@ const NotificationCenter = () => {
                                             <div className="flex items-center gap-4 text-xs text-text-muted">
                                                 <div className="flex items-center gap-1">
                                                     <Clock size={12} />
-                                                    {formatTime(notification.sentAt)}
+                                                    {formatTime(notification.createdAt)}
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    {notification.read ? (
+                                                    {notification.isRead ? (
                                                         <>
                                                             <CheckCircle size={12} />
                                                             Read
