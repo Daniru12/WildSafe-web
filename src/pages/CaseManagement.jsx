@@ -17,7 +17,20 @@ import {
   Users,
   Plus,
   Save,
-  X
+  X,
+  Shield,
+  Flame,
+  TreePine,
+  Heart,
+  Users2,
+  HelpCircle,
+  Flag,
+  Mail,
+  Phone,
+  UserCircle,
+  Sparkles,
+  ChevronRight,
+  FileWarning
 } from 'lucide-react';
 
 const CaseManagement = () => {
@@ -534,183 +547,317 @@ const CaseManagement = () => {
 
                 {/* Create Case Modal */}
                 {showCreateForm && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl font-bold">File New Case</h2>
-                                <button
-                                    onClick={() => setShowCreateForm(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    <X size={24} />
-                                </button>
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                        <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl transform transition-all">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-primary to-emerald-600 px-6 py-5 text-white">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                            <FileWarning size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold">File New Case</h2>
+                                            <p className="text-white/80 text-sm">Create a new wildlife threat case</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateForm(false)}
+                                        className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Threat Report</label>
-                                        <select
-                                            className="input-field"
-                                            value={newCase.threatReportId}
-                                            onChange={(e) => handleThreatReportChange(e.target.value)}
-                                        >
-                                            <option value="">Select Threat Report</option>
-                                            {threatReports.map(report => (
-                                                <option key={report._id} value={report._id}>
-                                                    {report.reportId} - {report.threatType}
-                                                </option>
-                                            ))}
-                                        </select>
+                            {/* Form Content */}
+                            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                                {/* Section 1: Case Details */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-primary/10 rounded-lg">
+                                            <Sparkles size={16} className="text-primary" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Case Details</h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
                                     </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Threat Report */}
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <FileText size={14} className="text-primary" />
+                                                Linked Threat Report
+                                            </label>
+                                            <select
+                                                className="input-field bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                value={newCase.threatReportId}
+                                                onChange={(e) => handleThreatReportChange(e.target.value)}
+                                            >
+                                                <option value="">Select Threat Report (Optional)</option>
+                                                {threatReports.map(report => (
+                                                    <option key={report._id} value={report._id}>
+                                                        {report.reportId} - {formatThreatType(report.threatType)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                                    <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Threat Type</label>
-                                        <select
-                                            className="input-field"
-                                            value={newCase.threatType}
-                                            onChange={(e) => setNewCase({ ...newCase, threatType: e.target.value })}
-                                        >
-                                            <option value="POACHING">Poaching</option>
-                                            <option value="FOREST_FIRE">Forest Fire</option>
-                                            <option value="INJURED_ANIMAL">Injured Animal</option>
-                                            <option value="ILLEGAL_LOGGING">Illegal Logging</option>
-                                            <option value="HUMAN_WILDLIFE_CONFLICT">Human-Wildlife Conflict</option>
-                                            <option value="OTHER">Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="text-sm font-medium text-text-muted">Location Address</label>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        placeholder="Enter location address"
-                                        value={newCase.location.address}
-                                        onChange={(e) => setNewCase({ 
-                                            ...newCase, 
-                                            location: { ...newCase.location, address: e.target.value }
-                                        })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Date & Time</label>
-                                        <input
-                                            type="datetime-local"
-                                            className="input-field"
-                                            value={newCase.dateTime}
-                                            onChange={(e) => setNewCase({ ...newCase, dateTime: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Priority</label>
-                                        <select
-                                            className="input-field"
-                                            value={newCase.priority}
-                                            onChange={(e) => setNewCase({ ...newCase, priority: e.target.value })}
-                                        >
-                                            <option value="LOW">Low</option>
-                                            <option value="MEDIUM">Medium</option>
-                                            <option value="HIGH">High</option>
-                                            <option value="CRITICAL">Critical</option>
-                                        </select>
+                                        {/* Threat Type */}
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <AlertTriangle size={14} className="text-primary" />
+                                                Threat Type
+                                            </label>
+                                            <select
+                                                className="input-field bg-white text-gray-900 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                value={newCase.threatType}
+                                                onChange={(e) => setNewCase({ ...newCase, threatType: e.target.value })}
+                                            >
+                                                <option value="POACHING">🦏 Poaching</option>
+                                                <option value="FOREST_FIRE">🔥 Forest Fire</option>
+                                                <option value="INJURED_ANIMAL">🩹 Injured Animal</option>
+                                                <option value="ILLEGAL_LOGGING">🌲 Illegal Logging</option>
+                                                <option value="HUMAN_WILDLIFE_CONFLICT">🐘 Human-Wildlife Conflict</option>
+                                                <option value="OTHER">❓ Other</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="form-group">
-                                    <label className="text-sm font-medium text-text-muted">Assign Officer</label>
-                                    <select
-                                        className="input-field"
-                                        value={newCase.assignedOfficer}
-                                        onChange={(e) => setNewCase({ ...newCase, assignedOfficer: e.target.value })}
-                                    >
-                                        <option value="">Select Officer (Optional)</option>
-                                        {officers.map(officer => (
-                                            <option key={officer._id} value={officer._id}>
-                                                {officer.name} - {officer.email}
-                                            </option>
-                                        ))}
-                                    </select>
+                                {/* Section 2: Location & Time */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-blue-100 rounded-lg">
+                                            <MapPin size={16} className="text-blue-600" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Location & Time</h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        {/* Location */}
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <MapPin size={14} className="text-blue-600" />
+                                                Location Address
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pl-10"
+                                                    placeholder="Enter the incident location"
+                                                    value={newCase.location.address}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        location: { ...newCase.location, address: e.target.value }
+                                                    })}
+                                                />
+                                                <MapPin size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Date & Time */}
+                                            <div className="form-group">
+                                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                    <Calendar size={14} className="text-blue-600" />
+                                                    Date & Time
+                                                </label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="datetime-local"
+                                                        className="input-field bg-white text-gray-900 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pl-10"
+                                                        value={newCase.dateTime}
+                                                        onChange={(e) => setNewCase({ ...newCase, dateTime: e.target.value })}
+                                                    />
+                                                    <Calendar size={16} className="absolute left-3 top-3 text-gray-400" />
+                                                </div>
+                                            </div>
+
+                                            {/* Priority */}
+                                            <div className="form-group">
+                                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                    <Flag size={14} className="text-blue-600" />
+                                                    Priority Level
+                                                </label>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((priority) => (
+                                                        <button
+                                                            key={priority}
+                                                            type="button"
+                                                            onClick={() => setNewCase({ ...newCase, priority })}
+                                                            className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                                                                newCase.priority === priority
+                                                                    ? priority === 'LOW' ? 'bg-gray-600 text-white shadow-md scale-105'
+                                                                    : priority === 'MEDIUM' ? 'bg-blue-600 text-white shadow-md scale-105'
+                                                                    : priority === 'HIGH' ? 'bg-orange-600 text-white shadow-md scale-105'
+                                                                    : 'bg-red-600 text-white shadow-md scale-105'
+                                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            {priority.charAt(0) + priority.slice(1).toLowerCase()}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Reporter Name</label>
-                                        <input
-                                            type="text"
-                                            className="input-field"
-                                            placeholder="Optional"
-                                            value={newCase.reporterInfo.name}
-                                            onChange={(e) => setNewCase({ 
-                                                ...newCase, 
-                                                reporterInfo: { ...newCase.reporterInfo, name: e.target.value }
-                                            })}
-                                        />
+                                {/* Section 3: Assignment */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-purple-100 rounded-lg">
+                                            <Shield size={16} className="text-purple-600" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Assignment</h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
                                     </div>
-
+                                    
                                     <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Reporter Email</label>
-                                        <input
-                                            type="email"
-                                            className="input-field"
-                                            placeholder="Optional"
-                                            value={newCase.reporterInfo.email}
-                                            onChange={(e) => setNewCase({ 
-                                                ...newCase, 
-                                                reporterInfo: { ...newCase.reporterInfo, email: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="text-sm font-medium text-text-muted">Reporter Phone</label>
-                                        <input
-                                            type="tel"
-                                            className="input-field"
-                                            placeholder="Optional"
-                                            value={newCase.reporterInfo.phone}
-                                            onChange={(e) => setNewCase({ 
-                                                ...newCase, 
-                                                reporterInfo: { ...newCase.reporterInfo, phone: e.target.value }
-                                            })}
-                                        />
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                            <User size={14} className="text-purple-600" />
+                                            Assign Officer
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                className="input-field bg-white text-gray-900 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all pl-10 appearance-none"
+                                                value={newCase.assignedOfficer}
+                                                onChange={(e) => setNewCase({ ...newCase, assignedOfficer: e.target.value })}
+                                            >
+                                                <option value="">Select Officer (Optional)</option>
+                                                {officers.map(officer => (
+                                                    <option key={officer._id} value={officer._id}>
+                                                        {officer.name} - {officer.email}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <UserCircle size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            <ChevronRight size={16} className="absolute right-3 top-3 text-gray-400 rotate-90" />
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        id="anonymous"
-                                        checked={newCase.reporterInfo.isAnonymous}
-                                        onChange={(e) => setNewCase({ 
-                                            ...newCase, 
-                                            reporterInfo: { ...newCase.reporterInfo, isAnonymous: e.target.checked }
-                                        })}
-                                    />
-                                    <label htmlFor="anonymous" className="text-sm text-text-muted">
-                                        Anonymous reporter
+                                {/* Section 4: Reporter Information */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-amber-100 rounded-lg">
+                                            <UserCircle size={16} className="text-amber-600" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Reporter Information</h3>
+                                        <span className="text-xs text-gray-400 ml-1">(Optional)</span>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <User size={14} className="text-amber-600" />
+                                                Name
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all pl-10"
+                                                    placeholder="Reporter name"
+                                                    value={newCase.reporterInfo.name}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        reporterInfo: { ...newCase.reporterInfo, name: e.target.value }
+                                                    })}
+                                                />
+                                                <User size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <Mail size={14} className="text-amber-600" />
+                                                Email
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="email"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all pl-10"
+                                                    placeholder="Email address"
+                                                    value={newCase.reporterInfo.email}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        reporterInfo: { ...newCase.reporterInfo, email: e.target.value }
+                                                    })}
+                                                />
+                                                <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <Phone size={14} className="text-amber-600" />
+                                                Phone
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="tel"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all pl-10"
+                                                    placeholder="Phone number"
+                                                    value={newCase.reporterInfo.phone}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        reporterInfo: { ...newCase.reporterInfo, phone: e.target.value }
+                                                    })}
+                                                />
+                                                <Phone size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Anonymous Checkbox */}
+                                    <label className="flex items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                id="anonymous"
+                                                className="sr-only peer"
+                                                checked={newCase.reporterInfo.isAnonymous}
+                                                onChange={(e) => setNewCase({ 
+                                                    ...newCase, 
+                                                    reporterInfo: { ...newCase.reporterInfo, isAnonymous: e.target.checked }
+                                                })}
+                                            />
+                                            <div className="w-5 h-5 border-2 border-gray-300 rounded peer-checked:bg-primary peer-checked:border-primary transition-all flex items-center justify-center">
+                                                <CheckCircle size={14} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Shield size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
+                                            <span className="text-sm text-gray-600">Keep reporter anonymous</span>
+                                        </div>
                                     </label>
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    onClick={() => setShowCreateForm(false)}
-                                    className="px-4 py-2 border border-border rounded-lg hover:bg-surface-light transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleCreateCase}
-                                    className="flex items-center gap-2 btn-primary"
-                                >
-                                    <Save size={16} />
-                                    <span>File Case</span>
-                                </button>
+                            {/* Footer */}
+                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                                <p className="text-sm text-gray-500 flex items-center gap-2">
+                                    <AlertTriangle size={14} className="text-amber-500" />
+                                    All fields marked with icons are important
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowCreateForm(false)}
+                                        className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-medium"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleCreateCase}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all font-medium"
+                                    >
+                                        <Save size={18} />
+                                        <span>File Case</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
