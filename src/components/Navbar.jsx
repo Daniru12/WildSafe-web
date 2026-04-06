@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 import NotificationDropdown from './NotificationDropdown';
-import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Package } from 'lucide-react';
+import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Package, Sparkles } from 'lucide-react';
 
 
 const Navbar = () => {
@@ -70,6 +70,10 @@ const Navbar = () => {
                                     <Link to="/resources" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
                                         <Package size={18} />
                                         <span>Resources</span>
+                                    </Link>
+                                    <Link to="/ai-insights" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <Sparkles size={18} />
+                                        <span>AI Insights</span>
                                     </Link>
                                     <Link to="/analytics" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
                                         <BarChart3 size={18} />
