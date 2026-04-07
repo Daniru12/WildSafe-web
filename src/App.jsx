@@ -14,6 +14,10 @@ import CaseManagement from './pages/CaseManagement';
 import CaseDetails from './pages/CaseDetails';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
+import StaffManagement from './pages/StaffManagement';
+import ResourceManagement from './pages/ResourceManagement';
+import UserManagement from './pages/UserManagement';
+import AdminLayout from './components/AdminLayout';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, roles }) => {
@@ -32,11 +36,24 @@ const ProtectedRoute = ({ children, roles }) => {
   return children;
 };
 
+// Admin Role Wrapper for Layout
+const RoleBasedLayout = ({ children }) => {
+  const { user } = useAuth();
+  if (user?.role === 'ADMIN') {
+    return <AdminLayout>{children}</AdminLayout>;
+  }
+  return children;
+};
+
 // Role-based Dashboard Switcher
 const DashboardSelector = () => {
   const { user } = useAuth();
   if (['OFFICER', 'ADMIN'].includes(user.role)) {
-    return <OfficerDashboard />;
+    return (
+      <RoleBasedLayout>
+        <OfficerDashboard />
+      </RoleBasedLayout>
+    );
   }
   return <CitizenDashboard />;
 };
@@ -64,7 +81,9 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <Profile />
+                <RoleBasedLayout>
+                  <Profile />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -91,7 +110,9 @@ function App() {
             path="/analytics"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <Analytics />
+                <RoleBasedLayout>
+                  <Analytics />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -101,7 +122,9 @@ function App() {
             path="/case-management"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <CaseManagement />
+                <RoleBasedLayout>
+                  <CaseManagement />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -110,7 +133,9 @@ function App() {
             path="/cases/:caseId"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <CaseDetails />
+                <RoleBasedLayout>
+                  <CaseDetails />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -119,7 +144,42 @@ function App() {
             path="/notifications"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <NotificationCenter />
+                <RoleBasedLayout>
+                  <NotificationCenter />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/staff"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <RoleBasedLayout>
+                  <StaffManagement />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <RoleBasedLayout>
+                  <UserManagement />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resources"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <ResourceManagement />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
