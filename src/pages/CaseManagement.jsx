@@ -14,7 +14,23 @@ import {
   Search,
   Calendar,
   ArrowUpRight,
-  Users
+  Users,
+  Plus,
+  Save,
+  X,
+  Shield,
+  Flame,
+  TreePine,
+  Heart,
+  Users2,
+  HelpCircle,
+  Flag,
+  Mail,
+  Phone,
+  UserCircle,
+  Sparkles,
+  ChevronRight,
+  FileWarning
 } from 'lucide-react';
 
 const CaseManagement = () => {
@@ -22,11 +38,23 @@ const CaseManagement = () => {
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [officers, setOfficers] = useState([]);
+    const [threatReports, setThreatReports] = useState([]);
     const [filters, setFilters] = useState({
         status: '',
         priority: '',
         threatType: '',
         search: ''
+    });
+    const [newCase, setNewCase] = useState({
+        threatReportId: '',
+        threatType: 'POACHING',
+        location: { lat: 0, lng: 0, address: '' },
+        reporterInfo: { name: '', email: '', phone: '', isAnonymous: false },
+        dateTime: new Date().toISOString().slice(0, 16),
+        priority: 'MEDIUM',
+        assignedOfficer: ''
     });
     const [stats, setStats] = useState({
         total: 0,
@@ -38,7 +66,69 @@ const CaseManagement = () => {
     useEffect(() => {
         fetchCases();
         fetchStats();
+        fetchOfficers();
+        fetchThreatReports();
     }, []);
+
+    const fetchOfficers = async () => {
+        try {
+            const response = await api.get('/auth/users');
+            const officers = response.data.filter(user => user.role === 'OFFICER');
+            setOfficers(officers || []);
+        } catch (err) {
+            console.error('Failed to fetch officers:', err);
+        }
+    };
+
+    const fetchThreatReports = async () => {
+        try {
+            const response = await api.get('/threat-reports');
+            setThreatReports(response.data.reports || []);
+        } catch (err) {
+            console.error('Failed to fetch threat reports:', err);
+        }
+    };
+
+    const handleThreatReportChange = async (reportId) => {
+        setNewCase({ ...newCase, threatReportId: reportId });
+        
+        if (reportId) {
+            try {
+                const response = await api.get(`/threat-reports/${reportId}`);
+                const report = response.data;
+                if (report && report.location) {
+                    setNewCase(prev => ({
+                        ...prev,
+                        threatReportId: reportId,
+                        location: report.location,
+                        threatType: report.threatType || prev.threatType,
+                        dateTime: report.dateTime ? new Date(report.dateTime).toISOString().slice(0, 16) : prev.dateTime,
+                        reporterInfo: report.reporterInfo || prev.reporterInfo
+                    }));
+                }
+            } catch (err) {
+                console.error('Failed to fetch threat report details:', err);
+                if (err.response?.status === 404) {
+                    console.warn('Threat report not found, it may have been deleted');
+                    // Don't reset the form, just show a warning
+                    setError('Selected threat report not found. It may have been deleted.');
+                    setTimeout(() => setError(null), 3000);
+                } else {
+                    console.error('Error fetching threat report:', err);
+                }
+            }
+        } else {
+            // Reset form fields when no report is selected
+            setNewCase(prev => ({
+                ...prev,
+                threatReportId: '',
+                location: { lat: 0, lng: 0, address: '' },
+                reporterInfo: { name: '', email: '', phone: '', isAnonymous: false },
+                dateTime: new Date().toISOString().slice(0, 16),
+                threatType: 'POACHING'
+            }));
+        }
+    };
 
     const fetchCases = async () => {
         try {
@@ -91,6 +181,77 @@ const CaseManagement = () => {
             search: ''
         });
         setTimeout(fetchCases, 0);
+    };
+
+    const handleCreateCase = async () => {
+        try {
+            console.log('Creating case with data:', newCase);
+            console.log('Auth token:', localStorage.getItem('token'));
+            
+            // If threat report is selected, fetch its details to get location and reporter info
+            if (newCase.threatReportId) {
+                try {
+                    const reportResponse = await api.get(`/threat-reports/${newCase.threatReportId}`);
+                    const report = reportResponse.data;
+                    
+                    // Update case data with report details
+                    const caseData = {
+                        ...newCase,
+                        location: report.location || newCase.location,
+                        reporterInfo: report.reporterInfo || newCase.reporterInfo,
+                        dateTime: report.dateTime ? new Date(report.dateTime).toISOString().slice(0, 16) : newCase.dateTime,
+                        threatType: report.threatType || newCase.threatType
+                    };
+                    
+                    console.log('Updated case data with report details:', caseData);
+                    const response = await api.post('/cases', caseData);
+                    console.log('Case created successfully:', response.data);
+                    
+                    setCases([response.data.case, ...cases]);
+                    setShowCreateForm(false);
+                    resetNewCaseForm();
+                    fetchStats();
+                } catch (reportError) {
+                    console.error('Error fetching threat report details:', reportError);
+                    if (reportError.response?.status === 404) {
+                        setError('Selected threat report not found. Please select a different report or create case without report.');
+                        return;
+                    }
+                    // If we can't fetch report details due to other errors, proceed with original data
+                    const response = await api.post('/cases', newCase);
+                    console.log('Case created successfully:', response.data);
+                    
+                    setCases([response.data.case, ...cases]);
+                    setShowCreateForm(false);
+                    resetNewCaseForm();
+                    fetchStats();
+                }
+            } else {
+                // No threat report selected, proceed with original data
+                const response = await api.post('/cases', newCase);
+                console.log('Case created successfully:', response.data);
+                
+                setCases([response.data.case, ...cases]);
+                setShowCreateForm(false);
+                resetNewCaseForm();
+                fetchStats();
+            }
+        } catch (err) {
+            console.error('Error creating case:', err.response?.data || err.message);
+            setError(err.response?.data?.message || 'Failed to create case');
+        }
+    };
+
+    const resetNewCaseForm = () => {
+        setNewCase({
+            threatReportId: '',
+            threatType: 'POACHING',
+            location: { lat: 0, lng: 0, address: '' },
+            reporterInfo: { name: '', email: '', phone: '', isAnonymous: false },
+            dateTime: new Date().toISOString().slice(0, 16),
+            priority: 'MEDIUM',
+            assignedOfficer: ''
+        });
     };
 
     const getStatusColor = (status) => {
@@ -148,8 +309,19 @@ const CaseManagement = () => {
             <Navbar />
             <main className="max-w-7xl mx-auto px-6 mt-12 animate-fade-in">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-2">Case Management</h1>
-                    <p className="text-text-muted">Manage and track wildlife threat cases</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-4xl font-bold mb-2">Case Management</h1>
+                            <p className="text-text-muted">Manage and track wildlife threat cases</p>
+                        </div>
+                        <button
+                            onClick={() => setShowCreateForm(true)}
+                            className="flex items-center gap-2 btn-primary"
+                        >
+                            <Plus size={20} />
+                            <span>File New Case</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
@@ -372,6 +544,324 @@ const CaseManagement = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Create Case Modal */}
+                {showCreateForm && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                        <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl transform transition-all">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-primary to-emerald-600 px-6 py-5 text-white">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                            <FileWarning size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold">File New Case</h2>
+                                            <p className="text-white/80 text-sm">Create a new wildlife threat case</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateForm(false)}
+                                        className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Form Content */}
+                            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                                {/* Section 1: Case Details */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-primary/10 rounded-lg">
+                                            <Sparkles size={16} className="text-primary" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Case Details</h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Threat Report */}
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <FileText size={14} className="text-primary" />
+                                                Linked Threat Report
+                                            </label>
+                                            <select
+                                                className="input-field bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                value={newCase.threatReportId}
+                                                onChange={(e) => handleThreatReportChange(e.target.value)}
+                                            >
+                                                <option value="">Select Threat Report (Optional)</option>
+                                                {threatReports.map(report => (
+                                                    <option key={report._id} value={report._id}>
+                                                        {report.reportId} - {formatThreatType(report.threatType)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Threat Type */}
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <AlertTriangle size={14} className="text-primary" />
+                                                Threat Type
+                                            </label>
+                                            <select
+                                                className="input-field bg-white text-gray-900 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                value={newCase.threatType}
+                                                onChange={(e) => setNewCase({ ...newCase, threatType: e.target.value })}
+                                            >
+                                                <option value="POACHING">🦏 Poaching</option>
+                                                <option value="FOREST_FIRE">🔥 Forest Fire</option>
+                                                <option value="INJURED_ANIMAL">🩹 Injured Animal</option>
+                                                <option value="ILLEGAL_LOGGING">🌲 Illegal Logging</option>
+                                                <option value="HUMAN_WILDLIFE_CONFLICT">🐘 Human-Wildlife Conflict</option>
+                                                <option value="OTHER">❓ Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 2: Location & Time */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-blue-100 rounded-lg">
+                                            <MapPin size={16} className="text-blue-600" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Location & Time</h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        {/* Location */}
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <MapPin size={14} className="text-blue-600" />
+                                                Location Address
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pl-10"
+                                                    placeholder="Enter the incident location"
+                                                    value={newCase.location.address}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        location: { ...newCase.location, address: e.target.value }
+                                                    })}
+                                                />
+                                                <MapPin size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Date & Time */}
+                                            <div className="form-group">
+                                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                    <Calendar size={14} className="text-blue-600" />
+                                                    Date & Time
+                                                </label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="datetime-local"
+                                                        className="input-field bg-white text-gray-900 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pl-10"
+                                                        value={newCase.dateTime}
+                                                        onChange={(e) => setNewCase({ ...newCase, dateTime: e.target.value })}
+                                                    />
+                                                    <Calendar size={16} className="absolute left-3 top-3 text-gray-400" />
+                                                </div>
+                                            </div>
+
+                                            {/* Priority */}
+                                            <div className="form-group">
+                                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                    <Flag size={14} className="text-blue-600" />
+                                                    Priority Level
+                                                </label>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((priority) => (
+                                                        <button
+                                                            key={priority}
+                                                            type="button"
+                                                            onClick={() => setNewCase({ ...newCase, priority })}
+                                                            className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                                                                newCase.priority === priority
+                                                                    ? priority === 'LOW' ? 'bg-gray-600 text-white shadow-md scale-105'
+                                                                    : priority === 'MEDIUM' ? 'bg-blue-600 text-white shadow-md scale-105'
+                                                                    : priority === 'HIGH' ? 'bg-orange-600 text-white shadow-md scale-105'
+                                                                    : 'bg-red-600 text-white shadow-md scale-105'
+                                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            {priority.charAt(0) + priority.slice(1).toLowerCase()}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 3: Assignment */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-purple-100 rounded-lg">
+                                            <Shield size={16} className="text-purple-600" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Assignment</h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                            <User size={14} className="text-purple-600" />
+                                            Assign Officer
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                className="input-field bg-white text-gray-900 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all pl-10 appearance-none"
+                                                value={newCase.assignedOfficer}
+                                                onChange={(e) => setNewCase({ ...newCase, assignedOfficer: e.target.value })}
+                                            >
+                                                <option value="">Select Officer (Optional)</option>
+                                                {officers.map(officer => (
+                                                    <option key={officer._id} value={officer._id}>
+                                                        {officer.name} - {officer.email}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <UserCircle size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            <ChevronRight size={16} className="absolute right-3 top-3 text-gray-400 rotate-90" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 4: Reporter Information */}
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-1.5 bg-amber-100 rounded-lg">
+                                            <UserCircle size={16} className="text-amber-600" />
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800">Reporter Information</h3>
+                                        <span className="text-xs text-gray-400 ml-1">(Optional)</span>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent ml-2"></div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <User size={14} className="text-amber-600" />
+                                                Name
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all pl-10"
+                                                    placeholder="Reporter name"
+                                                    value={newCase.reporterInfo.name}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        reporterInfo: { ...newCase.reporterInfo, name: e.target.value }
+                                                    })}
+                                                />
+                                                <User size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <Mail size={14} className="text-amber-600" />
+                                                Email
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="email"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all pl-10"
+                                                    placeholder="Email address"
+                                                    value={newCase.reporterInfo.email}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        reporterInfo: { ...newCase.reporterInfo, email: e.target.value }
+                                                    })}
+                                                />
+                                                <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                                <Phone size={14} className="text-amber-600" />
+                                                Phone
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="tel"
+                                                    className="input-field bg-white text-gray-900 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all pl-10"
+                                                    placeholder="Phone number"
+                                                    value={newCase.reporterInfo.phone}
+                                                    onChange={(e) => setNewCase({ 
+                                                        ...newCase, 
+                                                        reporterInfo: { ...newCase.reporterInfo, phone: e.target.value }
+                                                    })}
+                                                />
+                                                <Phone size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Anonymous Checkbox */}
+                                    <label className="flex items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors group">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                id="anonymous"
+                                                className="sr-only peer"
+                                                checked={newCase.reporterInfo.isAnonymous}
+                                                onChange={(e) => setNewCase({ 
+                                                    ...newCase, 
+                                                    reporterInfo: { ...newCase.reporterInfo, isAnonymous: e.target.checked }
+                                                })}
+                                            />
+                                            <div className="w-5 h-5 border-2 border-gray-300 rounded peer-checked:bg-primary peer-checked:border-primary transition-all flex items-center justify-center">
+                                                <CheckCircle size={14} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Shield size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
+                                            <span className="text-sm text-gray-600">Keep reporter anonymous</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                                <p className="text-sm text-gray-500 flex items-center gap-2">
+                                    <AlertTriangle size={14} className="text-amber-500" />
+                                    All fields marked with icons are important
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowCreateForm(false)}
+                                        className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-medium"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleCreateCase}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-emerald-600 text-white rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all font-medium"
+                                    >
+                                        <Save size={18} />
+                                        <span>File Case</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
