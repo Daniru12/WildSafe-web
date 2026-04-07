@@ -12,6 +12,8 @@ import ReportIncident from './pages/ReportIncident';
 import ThreatReport from './pages/ThreatReport';
 import CaseManagement from './pages/CaseManagement';
 import CaseDetails from './pages/CaseDetails';
+import RangerMissions from './pages/RangerMissions';
+import RangerMissionDetail from './pages/RangerMissionDetail';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
 import StaffManagement from './pages/StaffManagement';
@@ -135,6 +137,28 @@ function App() {
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
                 <RoleBasedLayout>
                   <CaseDetails />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ranger-missions"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <RangerMissions />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ranger-missions/:caseId"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <RangerMissionDetail />
                 </RoleBasedLayout>
               </ProtectedRoute>
             }

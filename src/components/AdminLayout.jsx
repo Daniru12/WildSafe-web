@@ -13,6 +13,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Bell,
+    Navigation2,
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 
@@ -20,6 +21,7 @@ const adminNavItems = [
     { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
     { label: 'Users', to: '/users', icon: Users },
     { label: 'Case Management', to: '/case-management', icon: Shield },
+    { label: 'Ranger missions', to: '/ranger-missions', icon: Navigation2, matchPrefix: true },
     { label: 'Analytics', to: '/analytics', icon: BarChart3 },
     { label: 'Resources', to: '/resources', icon: Package },
     { label: 'Staff', to: '/staff', icon: Users },
@@ -68,8 +70,11 @@ const AdminLayout = ({ children }) => {
 
                 {/* Nav Items */}
                 <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-3">
-                    {adminNavItems.map(({ label, to, icon: Icon }) => {
-                        const active = location.pathname === to;
+                    {adminNavItems.map((item) => {
+                        const { label, to, icon: NavIcon, matchPrefix } = item;
+                        const active = matchPrefix
+                            ? location.pathname.startsWith(to)
+                            : location.pathname === to;
                         return (
                             <Link
                                 key={to}
@@ -84,7 +89,7 @@ const AdminLayout = ({ children }) => {
                                     }
                                 `}
                             >
-                                <Icon size={19} className="shrink-0" />
+                                <NavIcon size={19} className="shrink-0" />
                                 {!collapsed && <span className="truncate">{label}</span>}
                                 {active && !collapsed && (
                                     <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
