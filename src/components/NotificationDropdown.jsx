@@ -108,10 +108,13 @@ const NotificationDropdown = () => {
 
     const getNotificationIcon = (type) => {
         const icons = {
-            'CASE_ASSIGNED': '📋',
-            'STATUS_UPDATE': '📝',
-            'RESOLUTION': '✅',
-            'URGENT_ALERT': '🚨'
+            'INCIDENT_UPDATE': '📝',
+            'ASSIGNMENT': '📋',
+            'SYSTEM': '📢',
+            'CASE_UPDATE': '🗂️',
+            'NEW_INCIDENT': '🚨',
+            'geo-alert': '📍',
+            'awareness': '📘'
         };
         return icons[type] || '📢';
     };
@@ -203,7 +206,7 @@ const NotificationDropdown = () => {
                                                     
                                                     <div className="flex items-center justify-between mt-1">
                                                         <span className="text-xs text-text-muted">
-                                                            {formatTime(notification.sentAt)}
+                                                            {formatTime(notification.createdAt)}
                                                         </span>
                                                         
                                                         {!notification.isRead && (
