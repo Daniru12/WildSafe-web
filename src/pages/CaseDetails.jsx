@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import InvestigationManagement from '../components/InvestigationManagement';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -25,27 +26,80 @@ import {
 const CaseDetails = () => {
     const { caseId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [case_, setCase] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({});
+    const [rangerActionLoading, setRangerActionLoading] = useState(false);
+    const [suggestedActions, setSuggestedActions] = useState([]);
+    const [loadingSuggestedActions, setLoadingSuggestedActions] = useState(false);
 
     useEffect(() => {
         fetchCaseDetails();
-    }, [caseId]);
+    }, [caseId, user?.role]);
 
     const fetchCaseDetails = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/cases/${caseId}`);
-            setCase(response.data);
-            setEditData(response.data);
+            const isOfficer = user?.role === 'OFFICER';
+            let response;
+
+            if (isOfficer) {
+                try {
+                    response = await api.get(`/ranger/cases/${caseId}`);
+                } catch (rangerErr) {
+                    response = await api.get(`/cases/${caseId}`);
+                }
+            } else {
+                response = await api.get(`/cases/${caseId}`);
+            }
+
+            setCase(response.data || null);
+            setEditData(response.data || {});
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to fetch case details');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSuggestedActions = async () => {
+        try {
+            setLoadingSuggestedActions(true);
+            const response = await api.get(`/ranger/cases/${caseId}/suggested-actions`);
+            setSuggestedActions(response.data?.suggestedActions || []);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to fetch suggested actions');
+        } finally {
+            setLoadingSuggestedActions(false);
+        }
+    };
+
+    const handleRangerAction = async (action) => {
+        if (!case_) return;
+        try {
+            setRangerActionLoading(true);
+            if (action === 'accept') {
+                await api.post(`/ranger/cases/${caseId}/accept`);
+            } else if (action === 'decline') {
+                const declineReason = window.prompt('Decline reason (optional):', '');
+                await api.post(`/ranger/cases/${caseId}/decline`, { declineReason: declineReason || '' });
+            } else if (action === 'start') {
+                await api.post(`/ranger/cases/${caseId}/start-mission`);
+            } else if (action === 'arrive') {
+                const notes = window.prompt('Arrival notes (optional):', '');
+                await api.post(`/ranger/cases/${caseId}/arrive-on-site`, { notes: notes || '' });
+            } else if (action === 'actionTaken') {
+                await api.post(`/ranger/cases/${caseId}/action-taken`);
+            }
+            await fetchCaseDetails();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to update ranger mission');
+        } finally {
+            setRangerActionLoading(false);
         }
     };
 
@@ -105,6 +159,11 @@ const CaseDetails = () => {
 
     const formatThreatType = (type) => {
         return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    };
+
+    const formatRangerStatus = (status) => {
+        if (!status) return 'N/A';
+        return status.replace(/_/g, ' ');
     };
 
     if (loading) {
@@ -306,6 +365,103 @@ const CaseDetails = () => {
                                     </div>
                                 </div>
                             </section>
+
+                            {/* Ranger Mission */}
+                            <section className="p-6 glass-morphism">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <Flag size={20} />
+                                    Ranger Mission
+                                </h3>
+
+                                <div className="flex flex-wrap items-center gap-3 mb-4">
+                                    <span className="text-sm text-text-muted">Current Ranger Status:</span>
+                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                        {formatRangerStatus(case_.rangerStatus)}
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {case_.rangerStatus === 'ASSIGNED' && (
+                                        <>
+                                            <button
+                                                disabled={rangerActionLoading}
+                                                onClick={() => handleRangerAction('accept')}
+                                                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60"
+                                            >
+                                                Accept Mission
+                                            </button>
+                                            <button
+                                                disabled={rangerActionLoading}
+                                                onClick={() => handleRangerAction('decline')}
+                                                className="px-4 py-2 border border-border rounded-lg hover:bg-surface-light transition-colors disabled:opacity-60"
+                                            >
+                                                Decline
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {case_.rangerStatus === 'ACCEPTED' && (
+                                        <button
+                                            disabled={rangerActionLoading}
+                                            onClick={() => handleRangerAction('start')}
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60"
+                                        >
+                                            Start Mission
+                                        </button>
+                                    )}
+
+                                    {case_.rangerStatus === 'EN_ROUTE' && (
+                                        <button
+                                            disabled={rangerActionLoading}
+                                            onClick={() => handleRangerAction('arrive')}
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60"
+                                        >
+                                            Mark Arrived On Site
+                                        </button>
+                                    )}
+
+                                    {case_.rangerStatus === 'ON_SITE' && (
+                                        <button
+                                            disabled={rangerActionLoading}
+                                            onClick={() => handleRangerAction('actionTaken')}
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-60"
+                                        >
+                                            Mark Action Taken
+                                        </button>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Suggested Ranger Actions */}
+                            <section className="p-6 glass-morphism">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                                        <MessageSquare size={20} />
+                                        Suggested Ranger Actions
+                                    </h3>
+                                    <button
+                                        disabled={loadingSuggestedActions}
+                                        onClick={fetchSuggestedActions}
+                                        className="px-4 py-2 border border-border rounded-lg hover:bg-surface-light transition-colors disabled:opacity-60"
+                                    >
+                                        {loadingSuggestedActions ? 'Loading...' : 'Get Suggestions'}
+                                    </button>
+                                </div>
+
+                                {suggestedActions.length > 0 ? (
+                                    <ul className="list-disc pl-6 space-y-2">
+                                        {suggestedActions.map((step, index) => (
+                                            <li key={`${step}-${index}`} className="text-sm">
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-text-muted">
+                                        No suggestions loaded yet. Click "Get Suggestions".
+                                    </p>
+                                )}
+                            </section>
                         </div>
 
                         {/* Sidebar */}
@@ -384,6 +540,14 @@ const CaseDetails = () => {
 
                 {activeTab === 'evidence' && (
                     <section className="p-6 glass-morphism">
+                        {/*
+                          Ranger endpoints return evidence as case_.evidence,
+                          while the existing case endpoint keeps it under investigation.
+                        */}
+                        {(() => {
+                            const evidenceList = case_.evidence || case_.investigation?.evidence || [];
+                            return (
+                                <>
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                                 <Camera size={20} />
@@ -395,9 +559,9 @@ const CaseDetails = () => {
                             </button>
                         </div>
                         
-                        {case_.investigation?.evidence?.length > 0 ? (
+                        {evidenceList.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {case_.investigation.evidence.map((evidence, index) => (
+                                {evidenceList.map((evidence, index) => (
                                     <div key={index} className="border border-border rounded-lg overflow-hidden">
                                         {evidence.evidenceType === 'PHOTO' ? (
                                             <img
@@ -430,6 +594,9 @@ const CaseDetails = () => {
                         ) : (
                             <p className="text-text-muted text-center py-8">No evidence uploaded yet.</p>
                         )}
+                                </>
+                            );
+                        })()}
                     </section>
                 )}
 
