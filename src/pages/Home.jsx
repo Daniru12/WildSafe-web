@@ -28,7 +28,7 @@ const Home = () => {
       description: "Securing habitats for endangered species"
     },
     {
-      url: "https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=2068&q=80",
+      url: "https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
       title: "Mountain Gorilla",
       location: "Virunga Mountains",
       description: "Preserving biodiversity hotspots"
@@ -62,7 +62,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-background text-text selection:bg-primary/30">
       <Navbar />
 
       {/* Hero Section with Slideshow */}
@@ -73,14 +73,14 @@ const Home = () => {
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === currentSlide ? 'opacity-100' : 'opacity-0'
+                index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
               }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 z-10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-background/80 z-10" />
               <img
                 src={slide.url}
                 alt={slide.title}
-                className="w-full h-full object-cover transform scale-105 animate-ken-burns"
+                className="w-full h-full object-cover transform animate-ken-burns"
               />
             </div>
           ))}
@@ -89,117 +89,112 @@ const Home = () => {
         {/* Hero Content */}
         <div className="relative z-20 h-full flex items-center">
           <div className="max-w-7xl mx-auto px-6 w-full">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
               {/* Left Column - Text Content */}
-              <div className="text-left animate-fade-in-up">
-                <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-white/10 backdrop-blur-md rounded-full border border-primary/30">
+              <div className="text-left animate-slide-up">
+                <div className="inline-flex items-center gap-3 px-4 py-2 mb-8 bg-white/5 backdrop-blur-md rounded-full border border-white/10 group cursor-pointer hover:border-primary/50 transition-all">
                   <Sparkles size={16} className="text-primary animate-pulse" />
-                  <span className="text-xs font-bold tracking-widest uppercase text-white">
-                    The Future of Conservation
+                  <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white">
+                    The Future of Wildlife Preservation
                   </span>
+                  <ChevronRight size={14} className="text-text-muted group-hover:translate-x-1 transition-transform" />
                 </div>
 
-                <h1 className="text-5xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
-                  Tokenizing the{' '}
+                <h1 className="text-6xl lg:text-8xl font-black text-white mb-8 leading-[0.9] tracking-tighter">
+                  Invest in the <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent animate-gradient">
-                    Wild Frontier
+                    Wild Assets
                   </span>
                 </h1>
 
-                <p className="text-xl text-gray-300 mb-8 leading-relaxed max-w-xl">
-                  Secure the future of our planet with the WildAsset Protocol. 
-                  Fractional ownership of wildlife assets, powered by blockchain 
-                  transparency and RWA tokenization.
+                <p className="text-xl text-text-muted mb-10 leading-relaxed max-w-xl font-medium">
+                  Join the WildAsset Protocol. Secure the future of our planet through 
+                  fractional ownership of wildlife habitats, powered by transparent 
+                  blockchain technology.
                 </p>
 
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-6">
                   <Link
                     to="/register"
-                    className="group relative px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+                    className="btn-primary group !py-4 !px-10"
                   >
-                    <span className="relative z-10 flex items-center gap-2">
-                      Get Started <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
+                    Get Started 
+                    <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
                   </Link>
                   
                   <Link
                     to="/about"
-                    className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold rounded-lg hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
+                    className="btn-secondary !py-4 !px-10"
                   >
-                    <Play size={16} /> Watch Demo
+                    <Play size={18} fill="currentColor" /> Watch Story
                   </Link>
                 </div>
 
                 {/* Trust Indicators */}
-                <div className="mt-12 flex items-center gap-8">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={20} className="text-primary" />
-                    <span className="text-sm text-gray-300">SEC Registered</span>
+                <div className="mt-16 flex items-center gap-10">
+                  <div className="flex items-center gap-3 group px-4 py-2 rounded-xl hover:bg-white/5 transition-all">
+                    <CheckCircle size={24} className="text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-white uppercase tracking-wider">Fully Regulated</span>
+                      <span className="text-[10px] text-text-muted">SEC Compliant</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Shield size={20} className="text-secondary" />
-                    <span className="text-sm text-gray-300">Audited</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users size={20} className="text-accent" />
-                    <span className="text-sm text-gray-300">15k+ Holders</span>
+                  <div className="flex items-center gap-3 group px-4 py-2 rounded-xl hover:bg-white/5 transition-all">
+                    <Shield size={24} className="text-secondary" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-white uppercase tracking-wider">Secure Assets</span>
+                      <span className="text-[10px] text-text-muted">Managed on-chain</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Right Column - Live Stats Card */}
-              <div className="hidden lg:block animate-fade-in">
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-white font-bold">Live Conservation Stats</h3>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-xs text-gray-300">Live</span>
+              <div className="hidden lg:block animate-fade-in group">
+                <div className="premium-card !p-10 relative overflow-hidden">
+                  <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/20 rounded-full blur-[100px] group-hover:bg-primary/30 transition-all duration-700" />
+                  
+                  <div className="flex items-center justify-between mb-10 relative z-10">
+                    <div>
+                      <h3 className="text-xl font-black text-white tracking-tight">Ecosystem Vitals</h3>
+                      <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1">Real-time Metrics</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 rounded-full border border-green-500/20">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                      <span className="text-[10px] text-green-500 font-black uppercase">Active Now</span>
                     </div>
                   </div>
                   
-                  <div className="space-y-6">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-300">Total Value Locked</span>
-                        <span className="text-white font-bold">$24.5M</span>
+                  <div className="space-y-10 relative z-10">
+                    {[
+                      { label: "Total Reserve Value", value: "$24,582,000", progress: 85, color: "var(--primary)" },
+                      { label: "Land Area Protected", value: "120,450 Acres", progress: 65, color: "var(--secondary)" },
+                      { label: "Conservation Holders", value: "15,892 Nodes", progress: 92, color: "var(--accent)" }
+                    ].map((m, i) => (
+                      <div key={i} className="space-y-3">
+                        <div className="flex justify-between items-end">
+                          <span className="text-sm text-text-muted font-bold uppercase tracking-wider">{m.label}</span>
+                          <span className="text-lg font-black text-white font-mono">{m.value}</span>
+                        </div>
+                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                          <div 
+                            className="h-full rounded-full transition-all duration-1000 ease-out" 
+                            style={{ width: `${m.progress}%`, backgroundColor: m.color, boxShadow: `0 0 15px ${m.color}66` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-primary rounded-full h-2 w-3/4 animate-pulse" />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-300">Acres Protected</span>
-                        <span className="text-white font-bold">120,450</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-secondary rounded-full h-2 w-2/3 animate-pulse" />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-300">Active Investors</span>
-                        <span className="text-white font-bold">15,892</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-accent rounded-full h-2 w-4/5 animate-pulse" />
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
-                  <div className="mt-8 pt-6 border-t border-white/20">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-2xl font-bold text-white">42</div>
-                        <div className="text-xs text-gray-400">Active Protocols</div>
+                  <div className="mt-12 pt-10 border-t border-white/10 relative z-10">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-3xl font-black text-white tracking-tighter italic">42+</div>
+                        <div className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em]">Partner Hubs</div>
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold text-white">12</div>
-                        <div className="text-xs text-gray-400">Countries</div>
+                      <div className="flex flex-col gap-1">
+                        <div className="text-3xl font-black text-white tracking-tighter italic">12</div>
+                        <div className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em]">Nations Active</div>
                       </div>
                     </div>
                   </div>
@@ -210,15 +205,15 @@ const Home = () => {
         </div>
 
         {/* Slideshow Controls */}
-        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-4">
+        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-8 px-8 py-4 bg-white/5 backdrop-blur-2xl rounded-full border border-white/10 shadow-premium">
           <button
             onClick={prevSlide}
-            className="p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all duration-300"
+            className="p-2 text-text-muted hover:text-white transition-all transform hover:scale-110 active:scale-95"
           >
-            <ChevronLeft size={20} className="text-white" />
+            <ChevronLeft size={24} />
           </button>
           
-          <div className="flex gap-2">
+          <div className="flex gap-4 items-center">
             {slides.map((_, index) => (
               <button
                 key={index}
@@ -226,10 +221,10 @@ const Home = () => {
                   setIsAutoPlaying(false);
                   setCurrentSlide(index);
                 }}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-1 rounded-full transition-all duration-500 ${
                   index === currentSlide 
-                    ? 'w-8 bg-primary' 
-                    : 'w-2 bg-white/50 hover:bg-white/80'
+                    ? 'w-12 bg-primary shadow-[0_0_10px_var(--primary)]' 
+                    : 'w-4 bg-white/20 hover:bg-white/40'
                 }`}
               />
             ))}
@@ -237,36 +232,35 @@ const Home = () => {
           
           <button
             onClick={nextSlide}
-            className="p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all duration-300"
+            className="p-2 text-text-muted hover:text-white transition-all transform hover:scale-110 active:scale-95"
           >
-            <ChevronRight size={20} className="text-white" />
+            <ChevronRight size={24} />
           </button>
         </div>
-
-        
       </section>
 
-      {/* Features Section with Animation */}
-      <section className="py-32 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/20 rounded-full blur-[120px]" />
+      {/* Features Section */}
+      <section className="py-40 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[150px]" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-[150px]" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-white/5 backdrop-blur-sm rounded-full">
-              <Sparkles size={16} className="text-primary" />
-              <span className="text-xs font-bold tracking-widest uppercase text-primary">Why Choose Us</span>
+          <div className="text-center mb-32">
+            <div className="inline-flex items-center gap-3 px-4 py-2 mb-8 bg-primary/5 rounded-full border border-primary/20">
+              <Award size={18} className="text-primary" />
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-primary">Core Advantages</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Bridging Conservation with{' '}
+            <h2 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter">
+              A Platform Built for <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                Web3 Innovation
+                Sustainable Impact
               </span>
             </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Join the revolution in wildlife conservation through blockchain technology
+            <p className="text-xl text-text-muted max-w-3xl mx-auto font-medium">
+              We leverage advanced multi-chain architecture to make wildlife 
+              conservation liquid, transparent, and accessible to everyone.
             </p>
           </div>
 
@@ -275,98 +269,65 @@ const Home = () => {
               {
                 icon: <Layers size={32} />,
                 title: "Fractional Ownership",
-                desc: "Invest in large-scale wildlife reserves through fractional tokens starting from just $10",
+                desc: "Own piece of a sanctuary starting from just $10. True democratization of conservation capital.",
                 color: "primary",
-                stats: "Min. Investment $10"
+                stats: "$10 Entry Point"
               },
               {
                 icon: <Lock size={32} />,
-                title: "Blockchain Transparency",
-                desc: "Every transaction and conservation milestone recorded on-chain for 100% accountability",
+                title: "Proof of Impact",
+                desc: "Every milestone verified on-chain. Real-time cameras and LIDAR data secure your investment.",
                 color: "secondary",
-                stats: "100% On-chain"
+                stats: "24/7 Monitoring"
               },
               {
                 icon: <Landmark size={32} />,
-                title: "RWA Tokenization",
-                desc: "Turn real-world ecological assets into liquid digital tokens for global biodiversity",
+                title: "RWA Liquidity",
+                desc: "Trade your conservation credits on our secondary marketplace. Liquidity meets ecology.",
                 color: "accent",
-                stats: "$24M+ Tokenized"
+                stats: "$12M Vol/m"
               },
               {
                 icon: <Shield size={32} />,
-                title: "Secure & Compliant",
-                desc: "Fully regulated and audited smart contracts ensuring investor protection",
+                title: "Enterprise Grade",
+                desc: "Audited smart contracts and deep-level insurance for your digital asset portfolio.",
                 color: "primary",
-                stats: "SEC Compliant"
+                stats: "Fully Insured"
               },
               {
                 icon: <TrendingUp size={32} />,
-                title: "Growing Returns",
-                desc: "Earn yields from conservation credits and ecosystem appreciation",
+                title: "Yield Generation",
+                desc: "Earn sustainable yields through eco-tourism and carbon credit secondary markets.",
                 color: "secondary",
-                stats: "APY up to 12%"
+                stats: "Up to 14% APY"
               },
               {
                 icon: <Users size={32} />,
-                title: "Community Governed",
-                desc: "Vote on conservation projects and protocol upgrades through DAO",
+                title: "DAO Governance",
+                desc: "Your tokens are your voice. Vote on expansion proposals and resource allocation.",
                 color: "accent",
-                stats: "15k+ Voters"
+                stats: "Self Sovereign"
               }
             ].map((feature, i) => (
               <div
                 key={i}
-                className="group relative p-8 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-primary/50 transition-all duration-500 hover:-translate-y-2 animate-fade-in-up"
-                style={{ animationDelay: `${i * 100}ms` }}
+                className="premium-card group hover:-translate-y-4"
               >
-                <div className={`absolute inset-0 bg-gradient-to-r from-${feature.color}/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity`} />
-                
-                <div className={`relative z-10 mb-6 p-4 bg-${feature.color}/10 rounded-2xl inline-block group-hover:scale-110 transition-transform`}>
-                  <div className={`text-${feature.color}`}>{feature.icon}</div>
+                <div className={`w-16 h-16 mb-8 rounded-2xl bg-${feature.color}/10 flex items-center justify-center text-${feature.color} group-hover:scale-110 transition-transform`}>
+                  {feature.icon}
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-gray-400 mb-4 leading-relaxed">{feature.desc}</p>
+                <h3 className="text-2xl font-black text-white mb-4 tracking-tight group-hover:text-primary transition-colors">{feature.title}</h3>
+                <p className="text-text-muted mb-8 leading-relaxed font-medium">{feature.desc}</p>
                 
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold text-${feature.color} bg-${feature.color}/10 px-3 py-1 rounded-full`}>
+                <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
+                  <span className={`text-[10px] font-black text-${feature.color} uppercase tracking-[0.2em]`}>
                     {feature.stats}
                   </span>
-                  <ArrowRight size={16} className="text-gray-500 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section with Counters */}
-      <section className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { value: "24.5M", label: "Total Value Locked", icon: <Landmark size={24} />, color: "primary" },
-              { value: "15.8K", label: "Global Holders", icon: <Users size={24} />, color: "secondary" },
-              { value: "120K", label: "Acres Protected", icon: <TreePine size={24} />, color: "accent" },
-              { value: "42", label: "Active Protocols", icon: <Layers size={24} />, color: "primary" }
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="group p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-primary/30 transition-all text-center animate-float"
-                style={{ animationDelay: `${i * 200}ms` }}
-              >
-                <div className={`mb-4 flex justify-center`}>
-                  <div className={`p-3 bg-${stat.color}/10 rounded-xl group-hover:scale-110 transition-transform`}>
-                    <div className={`text-${stat.color}`}>{stat.icon}</div>
+                  <div className="p-2 bg-white/5 rounded-full group-hover:bg-primary/20 transition-all">
+                    <ArrowRight size={16} className="text-text-muted group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
-                <div className={`text-3xl md:text-4xl font-extrabold text-${stat.color} mb-2`}>
-                  ${stat.value}
-                </div>
-                <div className="text-sm text-gray-400 uppercase tracking-wider">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -374,73 +335,54 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1456926631375-92c8ce872def?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-            className="w-full h-full object-cover opacity-10"
-            alt="Wildlife background"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20" />
-        </div>
+      <section className="py-40 relative px-6 group">
+        <div className="max-w-7xl mx-auto premium-card !p-20 relative overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/30 border-primary/20 hover:border-primary/40">
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-3xl -z-10" />
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[150px] -z-10 animate-float" />
+          
+          <div className="max-w-3xl mx-auto text-center relative z-10 flex flex-col items-center">
+            <div className="inline-flex items-center gap-3 px-4 py-2 mb-10 bg-white/10 rounded-full border border-white/10">
+              <Heart size={18} className="text-primary animate-pulse" />
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white">The Global Movement</span>
+            </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-white/10 backdrop-blur-md rounded-full border border-primary/30">
-            <Heart size={16} className="text-primary animate-pulse" />
-            <span className="text-xs font-bold tracking-widest uppercase text-white">
-              Join the Movement
-            </span>
-          </div>
-
-          <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6">
-            Ready to Make an{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-              Impact?
-            </span>
-          </h2>
-
-          <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-            Join the first multi-chain protocol dedicated to real-world asset tokenization 
-            for wildlife preservation. Be part of the solution.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-6">
-            <Link
-              to="/register"
-              className="group relative px-12 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                Join the Waitlist <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+            <h2 className="text-5xl md:text-8xl font-black text-white mb-10 leading-[0.9] tracking-tighter">
+              Ready to claim your <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                Legacy?
               </span>
-            </Link>
-            
-            <Link
-              to="/projects"
-              className="px-12 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold rounded-lg hover:bg-white/20 transition-all duration-300"
-            >
-              View Projects
-            </Link>
-          </div>
+            </h2>
 
-          {/* Trust Badges */}
-          <div className="mt-16 flex flex-wrap justify-center items-center gap-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center gap-2 text-gray-400">
-                <Shield size={16} />
-                <span className="text-sm">Audited</span>
-              </div>
-            ))}
+            <p className="text-xl text-text-muted mb-16 font-medium leading-relaxed">
+              Join 15,000+ pioneers in the first multi-chain protocol dedicated 
+              to real-world wildlife asset tokenization. Be part of the change.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-8">
+              <Link
+                to="/register"
+                className="btn-primary !py-5 !px-12 !text-lg shadow-2xl hover:shadow-primary/50"
+              >
+                Join the Waitlist
+              </Link>
+              
+              <Link
+                to="/projects"
+                className="btn-secondary !py-5 !px-12 !text-lg"
+              >
+                Explore Projects
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       <Footer />
 
-      {/* Add custom animations */}
       <style jsx>{`
         @keyframes ken-burns {
           0% { transform: scale(1); }
-          100% { transform: scale(1.1); }
+          100% { transform: scale(1.15); }
         }
         
         @keyframes gradient {
@@ -449,57 +391,17 @@ const Home = () => {
           100% { background-position: 0% 50%; }
         }
         
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-          100% { transform: translateY(0px); }
-        }
-        
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
         .animate-ken-burns {
-          animation: ken-burns 20s ease-in-out infinite alternate;
+          animation: ken-burns 30s ease-in-out infinite alternate;
         }
         
         .animate-gradient {
           background-size: 200% 200%;
-          animation: gradient 3s ease infinite;
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out forwards;
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.4s ease-out forwards;
+          animation: gradient 5s ease infinite;
         }
       `}</style>
     </div>
   );
 };
 
-export default Home;
+export default Home;
