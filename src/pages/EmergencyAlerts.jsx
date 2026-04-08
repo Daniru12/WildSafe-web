@@ -2,9 +2,33 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { AlertTriangle, Send, Users, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { AlertTriangle, Send, Users, Clock, CheckCircle2, XCircle, MapPin } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const ROLE_OPTIONS = ['CITIZEN', 'OFFICER', 'ADMIN'];
+
+const defaultMarkerIcon = L.icon({
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = defaultMarkerIcon;
+
+const LocationPicker = ({ position, setPosition }) => {
+    useMapEvents({
+        click(e) {
+            setPosition(e.latlng);
+        },
+    });
+
+    return position ? <Marker position={position} /> : null;
+};
 
 const EmergencyAlerts = () => {
     const { user } = useAuth();
@@ -12,10 +36,9 @@ const EmergencyAlerts = () => {
         title: '',
         message: '',
         targetRoles: ['OFFICER', 'ADMIN'],
-        lat: '',
-        lng: '',
         expiresAt: ''
     });
+    const [position, setPosition] = useState(null);
     const [sending, setSending] = useState(false);
     const [sendResult, setSendResult] = useState(null);
     const [error, setError] = useState('');
@@ -79,25 +102,20 @@ const EmergencyAlerts = () => {
             return;
         }
 
+        if (!position) {
+            setError('Please select a location on the map.');
+            return;
+        }
+
         const payload = {
             title: formData.title.trim(),
             message: formData.message.trim(),
             targetRoles: formData.targetRoles,
-        };
-
-        const latNum = Number(formData.lat);
-        const lngNum = Number(formData.lng);
-        if (formData.lat !== '' || formData.lng !== '') {
-            if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
-                setError('Latitude and longitude must be valid numbers.');
-                return;
-            }
-
-            payload.location = {
+            location: {
                 type: 'Point',
-                coordinates: [lngNum, latNum]
-            };
-        }
+                coordinates: [position.lng, position.lat]
+            }
+        };
 
         if (formData.expiresAt) {
             payload.expiresAt = new Date(formData.expiresAt).toISOString();
@@ -111,10 +129,9 @@ const EmergencyAlerts = () => {
                 title: '',
                 message: '',
                 targetRoles: ['OFFICER', 'ADMIN'],
-                lat: '',
-                lng: '',
                 expiresAt: ''
             });
+            setPosition(null);
             fetchAlerts();
             fetchStats();
         } catch (err) {
@@ -201,28 +218,28 @@ const EmergencyAlerts = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="text-sm text-text-muted">Latitude (optional)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                className="input-field"
-                                value={formData.lat}
-                                onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                                placeholder="7.8731"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-sm text-text-muted">Longitude (optional)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                className="input-field"
-                                value={formData.lng}
-                                onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                                placeholder="80.7718"
-                            />
+                        <div className="md:col-span-2">
+                            <label className="text-sm text-text-muted mb-2 block">Emergency Location (required)</label>
+                            <p className="text-xs text-text-muted mb-3">Click on the map to select the alert location. Nearby citizens and officers will be targeted based on these coordinates.</p>
+                            <div className="rounded-2xl overflow-hidden border border-border">
+                                <MapContainer center={[7.8731, 80.7718]} zoom={7} scrollWheelZoom={true} style={{ height: '320px', width: '100%' }}>
+                                    <TileLayer
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+                                    <LocationPicker position={position} setPosition={setPosition} />
+                                </MapContainer>
+                            </div>
+                            {position ? (
+                                <div className="mt-3 p-3 bg-surface-light rounded-lg text-sm flex items-center gap-2">
+                                    <MapPin size={14} className="text-primary" />
+                                    Lat: {position.lat.toFixed(6)}, Lng: {position.lng.toFixed(6)}
+                                </div>
+                            ) : (
+                                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm text-amber-300">
+                                    Select a location point before sending.
+                                </div>
+                            )}
                         </div>
 
                         <div>
