@@ -14,6 +14,7 @@ import CaseManagement from './pages/CaseManagement';
 import CaseDetails from './pages/CaseDetails';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
+import EmergencyAlerts from './pages/EmergencyAlerts';
 import StaffManagement from './pages/StaffManagement';
 import ResourceManagement from './pages/ResourceManagement';
 import UserManagement from './pages/UserManagement';
@@ -112,6 +113,17 @@ function App() {
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
                 <RoleBasedLayout>
                   <Analytics />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <EmergencyAlerts />
                 </RoleBasedLayout>
               </ProtectedRoute>
             }
