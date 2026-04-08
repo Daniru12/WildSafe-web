@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Edit2, Loader2, Plus, Search, Shield, Trash2, UserPlus, Users, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
@@ -22,12 +22,12 @@ function StaffManagement() {
     permissions: []
   });
 
-  const notify = (message, type = 'success') => {
+  const notify = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 2500);
-  };
+  }, []);
 
-  const loadStaff = async () => {
+  const loadStaff = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await api.get('/staff');
@@ -37,11 +37,11 @@ function StaffManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [notify]);
 
   useEffect(() => {
     loadStaff();
-  }, []);
+  }, [loadStaff]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return staff;

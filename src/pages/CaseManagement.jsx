@@ -68,6 +68,8 @@ const CaseManagement = () => {
         fetchStats();
         fetchOfficers();
         fetchThreatReports();
+        // Intentional: initial load only; filter changes use Apply / clear actions.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchOfficers = async () => {

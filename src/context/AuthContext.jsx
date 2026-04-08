@@ -3,6 +3,8 @@ import api from '../utils/api';
 
 const AuthContext = createContext();
 
+// Hook is colocated with provider; Vite fast refresh expects only components in this file.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
@@ -71,7 +73,18 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {loading ? (
+                <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background text-text-muted">
+                    <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" aria-hidden />
+                    <p className="text-sm">Checking session…</p>
+                    <p className="text-xs text-text-muted/80 max-w-xs text-center px-4">
+                        If this takes long, ensure the API is running and <code className="text-primary">VITE_API_BASE_URL</code> in{' '}
+                        <code className="text-primary">.env</code> matches your backend.
+                    </p>
+                </div>
+            ) : (
+                children
+            )}
         </AuthContext.Provider>
     );
 };

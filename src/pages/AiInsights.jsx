@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Activity, Bot, CheckCircle2, Loader2, Package, Search, Sparkles, UserCog, Zap } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
@@ -20,20 +20,20 @@ function AiInsights() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuggestion, setActionSuggestion] = useState('');
 
-  const loadResources = async () => {
+  const loadResources = useCallback(async () => {
     try {
       const { data } = await api.get('/resources');
       setResources(Array.isArray(data) ? data.filter((r) => r.status !== 'ARCHIVED') : []);
     } catch {
       setResources([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (tab === 'assignment' && resources.length === 0) {
       loadResources();
     }
-  }, [tab]);
+  }, [tab, resources.length, loadResources]);
 
   const runSemanticSearch = async (event) => {
     event.preventDefault();

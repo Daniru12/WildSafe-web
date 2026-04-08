@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import InvestigationManagement from '../components/InvestigationManagement';
@@ -32,11 +32,7 @@ const CaseDetails = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({});
 
-    useEffect(() => {
-        fetchCaseDetails();
-    }, [caseId]);
-
-    const fetchCaseDetails = async () => {
+    const fetchCaseDetails = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/cases/${caseId}`);
@@ -47,7 +43,11 @@ const CaseDetails = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [caseId]);
+
+    useEffect(() => {
+        fetchCaseDetails();
+    }, [fetchCaseDetails]);
 
     const handleSaveEdit = async () => {
         try {
@@ -56,29 +56,6 @@ const CaseDetails = () => {
             setIsEditing(false);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to update case');
-        }
-    };
-
-    const handleAddInvestigationNote = async (note) => {
-        try {
-            await api.put(`/cases/${caseId}/investigation`, {
-                findings: {
-                    type: 'NOTE',
-                    description: note
-                }
-            });
-            fetchCaseDetails();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to add investigation note');
-        }
-    };
-
-    const handleResolveCase = async (resolutionData) => {
-        try {
-            await api.put(`/cases/${caseId}/resolve`, resolutionData);
-            fetchCaseDetails();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to resolve case');
         }
     };
 

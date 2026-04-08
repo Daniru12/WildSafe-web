@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -41,12 +41,12 @@ function ResourceManagement() {
     location: ''
   });
 
-  const notify = (message, type = 'success') => {
+  const notify = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 2800);
-  };
+  }, []);
 
-  const loadResources = async () => {
+  const loadResources = useCallback(async () => {
     setLoading(true);
     try {
       const params = statusFilter ? `?status=${statusFilter}` : '';
@@ -57,21 +57,21 @@ function ResourceManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, notify]);
 
-  const loadStaff = async () => {
+  const loadStaff = useCallback(async () => {
     try {
       const { data } = await api.get('/staff');
       setStaff(Array.isArray(data) ? data : []);
     } catch {
       setStaff([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadResources();
     loadStaff();
-  }, [statusFilter]);
+  }, [loadResources, loadStaff]);
 
   const statusCounts = useMemo(() => {
     return STATUS_OPTIONS.reduce((acc, status) => {

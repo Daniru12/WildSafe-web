@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 import { Filter, Search, CheckCircle, Clock, AlertTriangle, User, Trash2, TrendingUp, MapPin, Activity, Shield } from 'lucide-react';
@@ -18,7 +18,7 @@ const AdminDashboard = () => {
     });
     const [predictiveInsights, setPredictiveInsights] = useState(null);
 
-    const fetchIncidents = async () => {
+    const fetchIncidents = useCallback(async () => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
             const res = await api.get(`/incidents/all?${queryParams}`);
@@ -28,9 +28,9 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters]);
 
-    const fetchThreatReports = async () => {
+    const fetchThreatReports = useCallback(async () => {
         try {
             const res = await api.get('/threat-reports');
             setThreatReports(res.data.reports || []);
@@ -39,9 +39,9 @@ const AdminDashboard = () => {
         } finally {
             setLoadingThreats(false);
         }
-    };
+    }, []);
 
-    const fetchPredictiveInsights = async () => {
+    const fetchPredictiveInsights = useCallback(async () => {
         try {
             const res = await api.get('/analytics/predictive/insights');
             setPredictiveInsights(res.data);
@@ -50,31 +50,31 @@ const AdminDashboard = () => {
         } finally {
             setLoadingPredictions(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (activeTab === 'incidents') {
             fetchIncidents();
         }
-    }, [filters, activeTab]);
+    }, [activeTab, fetchIncidents]);
 
     useEffect(() => {
         if (activeTab === 'threats') {
             fetchThreatReports();
         }
-    }, [activeTab]);
+    }, [activeTab, fetchThreatReports]);
 
     useEffect(() => {
         if (activeTab === 'predictions') {
             fetchPredictiveInsights();
         }
-    }, [activeTab]);
+    }, [activeTab, fetchPredictiveInsights]);
 
     const handleStatusChange = async (id, newStatus) => {
         try {
             await api.patch(`/incidents/${id}/status`, { status: newStatus });
             fetchIncidents();
-        } catch (err) {
+        } catch {
             alert('Failed to update status');
         }
     };
@@ -87,7 +87,7 @@ const AdminDashboard = () => {
         try {
             await api.delete(`/incidents/${id}`);
             fetchIncidents();
-        } catch (err) {
+        } catch {
             alert('Failed to delete incident. Only admins can delete incidents.');
         }
     };
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
         try {
             await api.delete(`/threat-reports/${reportId}`);
             fetchThreatReports();
-        } catch (err) {
+        } catch {
             alert('Failed to delete threat report. Only admins can delete threat reports.');
         }
     };
@@ -484,7 +484,7 @@ const AdminDashboard = () => {
                                                                 )}
                                                             </>
                                                         );
-                                                    } catch (err) {
+                                                    } catch {
                                                         // Fallback for non-JSON responses
                                                         return (
                                                             <div className="text-sm text-text-muted whitespace-pre-wrap">

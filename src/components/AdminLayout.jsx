@@ -13,7 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Bell,
-    Sparkles
+    Sparkles,
+    Navigation2,
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 
@@ -70,7 +71,8 @@ const AdminLayout = ({ children }) => {
                         <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Main Management</span>
                     </div>
 
-                    {adminNavItems.map(({ label, to, icon: Icon, matchPrefix }) => {
+                    {adminNavItems.map((item) => {
+                        const { label, to, icon: NavIcon, matchPrefix } = item;
                         const active = matchPrefix
                             ? location.pathname.startsWith(to)
                             : location.pathname === to;
@@ -88,7 +90,7 @@ const AdminLayout = ({ children }) => {
                                     }
                                 `}
                             >
-                                <Icon size={22} className={`shrink-0 transition-transform group-hover:scale-110 ${active ? 'animate-pulse' : ''}`} />
+                                <NavIcon size={22} className={`shrink-0 transition-transform group-hover:scale-110 ${active ? 'animate-pulse' : ''}`} />
                                 {!collapsed && <span className="font-bold text-sm tracking-wide">{label}</span>}
                                 {active && !collapsed && (
                                     <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
