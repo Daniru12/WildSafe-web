@@ -35,7 +35,7 @@ const EmergencyAlerts = () => {
     const [formData, setFormData] = useState({
         title: '',
         message: '',
-        targetRoles: ['OFFICER', 'ADMIN'],
+        targetRoles: ['CITIZEN', 'OFFICER'],
         expiresAt: ''
     });
     const [position, setPosition] = useState(null);
@@ -46,11 +46,16 @@ const EmergencyAlerts = () => {
     const [stats, setStats] = useState(null);
     const [loadingAlerts, setLoadingAlerts] = useState(true);
 
+    const sortByNewest = (items) => {
+        return [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    };
+
     const fetchAlerts = async () => {
         try {
             setLoadingAlerts(true);
-            const res = await api.get('/alerts?limit=20&page=1');
-            setAlerts(res.data.alerts || []);
+            const endpoint = user?.role === 'ADMIN' ? '/alerts/all?limit=20&page=1' : '/alerts?limit=20&page=1';
+            const res = await api.get(endpoint);
+            setAlerts(sortByNewest(res.data.alerts || []));
         } catch (err) {
             console.error('Failed to fetch alerts', err);
         } finally {
@@ -68,9 +73,10 @@ const EmergencyAlerts = () => {
     };
 
     useEffect(() => {
+        if (!user?.role) return;
         fetchAlerts();
         fetchStats();
-    }, []);
+    }, [user?.role]);
 
     const toggleTargetRole = (role) => {
         const hasRole = formData.targetRoles.includes(role);
@@ -125,10 +131,16 @@ const EmergencyAlerts = () => {
             setSending(true);
             const res = await api.post('/alerts/emergency', payload);
             setSendResult(res.data);
+
+            // Show the newly created alert at the top immediately.
+            if (res.data?.alert) {
+                setAlerts((prev) => sortByNewest([res.data.alert, ...prev]));
+            }
+
             setFormData({
                 title: '',
                 message: '',
-                targetRoles: ['OFFICER', 'ADMIN'],
+                targetRoles: ['CITIZEN', 'OFFICER'],
                 expiresAt: ''
             });
             setPosition(null);
@@ -284,7 +296,16 @@ const EmergencyAlerts = () => {
                 )}
 
                 <section className="glass-morphism p-6">
-                    <h2 className="text-xl font-semibold mb-4">Recent Alerts</h2>
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                        <h2 className="text-xl font-semibold">Recent Alerts</h2>
+                        <button
+                            type="button"
+                            onClick={fetchAlerts}
+                            className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface-light transition-colors"
+                        >
+                            Refresh
+                        </button>
+                    </div>
                     {loadingAlerts ? (
                         <p className="text-text-muted">Loading alerts...</p>
                     ) : alerts.length === 0 ? (
