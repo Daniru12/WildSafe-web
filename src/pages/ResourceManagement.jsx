@@ -1,450 +1,428 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
-import {
-    Package, Plus, X, Check, AlertCircle, Loader2,
-    Archive, UserCog, Edit2, ChevronDown, Filter, RefreshCw
-} from 'lucide-react';
+import aiService from '../services/aiService';
 
 const RESOURCE_TYPES = ['VEHICLE', 'EQUIPMENT', 'COMMUNICATION_DEVICE', 'MEDICAL_KIT', 'WEAPON', 'DRONE', 'OTHER'];
 const STATUS_OPTIONS = ['AVAILABLE', 'ASSIGNED', 'MAINTENANCE', 'ARCHIVED'];
 
-const statusStyle = {
-    AVAILABLE: 'bg-emerald-500/20 text-emerald-400',
-    ASSIGNED: 'bg-blue-500/20 text-blue-400',
-    MAINTENANCE: 'bg-amber-500/20 text-amber-400',
-    ARCHIVED: 'bg-surface-light text-text-muted',
+const statusBadge = {
+  AVAILABLE: 'bg-emerald-500/20 text-emerald-400',
+  ASSIGNED: 'bg-blue-500/20 text-blue-400',
+  MAINTENANCE: 'bg-amber-500/20 text-amber-400',
+  ARCHIVED: 'bg-surface-light text-text-muted'
 };
 
-const ResourceManagement = () => {
-    const [resources, setResources] = useState([]);
-    const [staff, setStaff] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('');
-    const [showModal, setShowModal] = useState(false);
-    const [editTarget, setEditTarget] = useState(null);
-    const [showAssignModal, setShowAssignModal] = useState(null);
-    const [assignStaffId, setAssignStaffId] = useState('');
-    const [toast, setToast] = useState(null);
-    const [confirmArchive, setConfirmArchive] = useState(null);
+function ResourceManagement() {
+  const [resources, setResources] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const [form, setForm] = useState({
-        type: RESOURCE_TYPES[0],
-        description: '',
-        metadata: ''
-    });
+  const [statusFilter, setStatusFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAiSearching, setIsAiSearching] = useState(false);
 
-    const showToast = (msg, type = 'success') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3500);
-    };
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [pendingArchiveId, setPendingArchiveId] = useState(null);
 
-    const fetchResources = async () => {
-        setLoading(true);
-        try {
-            const params = statusFilter ? `?status=${statusFilter}` : '';
-            const res = await api.get(`/resources${params}`);
-            setResources(res.data);
-        } catch {
-            showToast('Failed to load resources', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const [showAssignModal, setShowAssignModal] = useState(null);
+  const [assignStaffId, setAssignStaffId] = useState('');
+  const [aiSuggestedStaff, setAiSuggestedStaff] = useState(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
-    const fetchStaff = async () => {
-        try {
-            const res = await api.get('/staff');
-            setStaff(res.data);
-        } catch {
-            // silent
-        }
-    };
+  const [toast, setToast] = useState(null);
+  const [form, setForm] = useState({
+    type: RESOURCE_TYPES[0],
+    description: '',
+    serialNumber: '',
+    location: ''
+  });
 
-    useEffect(() => {
-        fetchResources();
-        fetchStaff();
-    }, [statusFilter]);
+  const notify = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2800);
+  };
 
-    const openCreate = () => {
-        setEditTarget(null);
-        setForm({ type: RESOURCE_TYPES[0], description: '', metadata: '' });
-        setShowModal(true);
-    };
+  const loadResources = async () => {
+    setLoading(true);
+    try {
+      const params = statusFilter ? `?status=${statusFilter}` : '';
+      const { data } = await api.get(`/resources${params}`);
+      setResources(Array.isArray(data) ? data : []);
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Failed to load resources', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const openEdit = (r) => {
-        setEditTarget(r);
-        setForm({
-            type: r.type,
-            description: r.description || '',
-            metadata: r.metadata ? JSON.stringify(r.metadata, null, 2) : ''
-        });
-        setShowModal(true);
-    };
+  const loadStaff = async () => {
+    try {
+      const { data } = await api.get('/staff');
+      setStaff(Array.isArray(data) ? data : []);
+    } catch {
+      setStaff([]);
+    }
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        let metadata;
-        try {
-            metadata = form.metadata ? JSON.parse(form.metadata) : {};
-        } catch {
-            showToast('Metadata must be valid JSON', 'error');
-            return;
-        }
+  useEffect(() => {
+    loadResources();
+    loadStaff();
+  }, [statusFilter]);
 
-        try {
-            if (editTarget) {
-                await api.put(`/resources/${editTarget._id}`, { type: form.type, description: form.description, metadata });
-                showToast('Resource updated');
-            } else {
-                await api.post('/resources', { type: form.type, description: form.description, metadata });
-                showToast('Resource created successfully');
-            }
-            setShowModal(false);
-            fetchResources();
-        } catch (err) {
-            showToast(err?.response?.data?.message || 'Operation failed', 'error');
-        }
-    };
-
-    const handleAssign = async () => {
-        if (!assignStaffId) return;
-        try {
-            await api.put(`/resources/${showAssignModal}/assign`, { staffId: assignStaffId });
-            showToast('Resource assigned to staff member');
-            setShowAssignModal(null);
-            setAssignStaffId('');
-            fetchResources();
-        } catch (err) {
-            showToast(err?.response?.data?.message || 'Assignment failed', 'error');
-        }
-    };
-
-    const handleArchive = async (id) => {
-        try {
-            await api.delete(`/resources/${id}`);
-            showToast('Resource archived');
-            setConfirmArchive(null);
-            fetchResources();
-        } catch (err) {
-            showToast(err?.response?.data?.message || 'Archive failed', 'error');
-        }
-    };
-
-    const statusCounts = STATUS_OPTIONS.reduce((acc, s) => {
-        acc[s] = resources.filter(r => r.status === s).length;
-        return acc;
+  const statusCounts = useMemo(() => {
+    return STATUS_OPTIONS.reduce((acc, status) => {
+      acc[status] = resources.filter((r) => r.status === status).length;
+      return acc;
     }, {});
+  }, [resources]);
 
-    return (
-        <div className="min-h-screen pb-16">
-            <Navbar />
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ type: RESOURCE_TYPES[0], description: '', serialNumber: '', location: '' });
+    setShowModal(true);
+  };
 
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-white animate-fade-in
-                    ${toast.type === 'error' ? 'bg-danger/90' : 'bg-primary/90'}`}>
-                    {toast.type === 'error' ? <AlertCircle size={18} /> : <Check size={18} />}
-                    <span className="font-medium text-sm">{toast.msg}</span>
-                </div>
-            )}
+  const openEdit = (row) => {
+    setEditing(row);
+    setForm({
+      type: row.type || RESOURCE_TYPES[0],
+      description: row.description || '',
+      serialNumber: row.metadata?.serialNumber || '',
+      location: row.metadata?.location || ''
+    });
+    setShowModal(true);
+  };
 
-            {/* Confirm Archive Modal */}
-            {confirmArchive && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="glass-morphism p-8 max-w-sm w-full mx-4 animate-fade-in">
-                        <Archive className="text-amber-400 mb-3" size={28} />
-                        <h3 className="text-xl font-bold mb-2">Archive Resource?</h3>
-                        <p className="text-text-muted text-sm mb-6">
-                            This resource will be marked as ARCHIVED. It can be restored later by updating the status.
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleArchive(confirmArchive)}
-                                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-lg font-semibold transition-colors"
-                            >
-                                Archive
-                            </button>
-                            <button
-                                onClick={() => setConfirmArchive(null)}
-                                className="flex-1 bg-surface-light hover:bg-border text-text py-2.5 rounded-lg font-semibold transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+  const saveResource = async (event) => {
+    event.preventDefault();
+    const metadata = {
+      serialNumber: form.serialNumber,
+      location: form.location
+    };
 
-            {/* Assign Modal */}
-            {showAssignModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="glass-morphism p-8 max-w-md w-full mx-4 animate-fade-in">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold flex items-center gap-2">
-                                <UserCog className="text-primary" size={20} />
-                                Assign Resource
-                            </h3>
-                            <button onClick={() => setShowAssignModal(null)} className="text-text-muted hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
+    try {
+      if (editing?._id) {
+        await api.put(`/resources/${editing._id}`, {
+          type: form.type,
+          description: form.description,
+          metadata
+        });
+        notify('Resource updated');
+      } else {
+        await api.post('/resources', {
+          type: form.type,
+          description: form.description,
+          metadata
+        });
+        notify('Resource created');
+      }
+      setShowModal(false);
+      await loadResources();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Save failed', 'error');
+    }
+  };
 
-                        {staff.length === 0 ? (
-                            <p className="text-text-muted text-sm text-center py-4">No staff members available. Add staff first.</p>
-                        ) : (
-                            <>
-                                <div className="relative mb-5">
-                                    <select
-                                        className="input-field appearance-none pr-10"
-                                        value={assignStaffId}
-                                        onChange={e => setAssignStaffId(e.target.value)}
-                                    >
-                                        <option value="">— Select Staff Member —</option>
-                                        {staff.map(s => (
-                                            <option key={s._id} value={s._id}>
-                                                {s.userId?.name || 'Unknown'} ({s.department?.replace('_', ' ')})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                                </div>
-                                <button
-                                    disabled={!assignStaffId}
-                                    onClick={handleAssign}
-                                    className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <UserCog size={16} /> Assign
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
+  const archiveResource = async () => {
+    if (!pendingArchiveId) return;
+    try {
+      await api.delete(`/resources/${pendingArchiveId}`);
+      notify('Resource archived');
+      setPendingArchiveId(null);
+      await loadResources();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Archive failed', 'error');
+    }
+  };
 
-            {/* Create/Edit Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="glass-morphism p-8 max-w-lg w-full mx-4 animate-fade-in max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">
-                                {editTarget ? 'Update Resource' : 'Add New Resource'}
-                            </h3>
-                            <button onClick={() => setShowModal(false)} className="text-text-muted hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
+  const handleAiSearch = async (event) => {
+    event.preventDefault();
+    if (!searchQuery.trim()) {
+      await loadResources();
+      return;
+    }
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Resource Type</label>
-                                <div className="relative">
-                                    <select
-                                        className="input-field appearance-none pr-10"
-                                        value={form.type}
-                                        onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                                    >
-                                        {RESOURCE_TYPES.map(t => (
-                                            <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                                </div>
-                            </div>
+    setIsAiSearching(true);
+    try {
+      const data = await aiService.searchResources(searchQuery.trim());
+      setResources(Array.isArray(data) ? data : []);
+      notify('AI semantic search complete');
+    } catch (error) {
+      notify(error?.response?.data?.message || 'AI search failed', 'error');
+    } finally {
+      setIsAiSearching(false);
+    }
+  };
 
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Description</label>
-                                <textarea
-                                    className="input-field resize-none"
-                                    rows={3}
-                                    placeholder="Brief description of this resource..."
-                                    value={form.description}
-                                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                                    required
-                                />
-                            </div>
+  const openAssign = (resourceId) => {
+    setShowAssignModal(resourceId);
+    setAssignStaffId('');
+    setAiSuggestedStaff(null);
+  };
 
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">
-                                    Metadata <span className="text-xs opacity-60">(optional JSON)</span>
-                                </label>
-                                <textarea
-                                    className="input-field resize-none font-mono text-sm"
-                                    rows={4}
-                                    placeholder={'{\n  "serialNumber": "ABC-001",\n  "location": "Zone A"\n}'}
-                                    value={form.metadata}
-                                    onChange={e => setForm(f => ({ ...f, metadata: e.target.value }))}
-                                />
-                            </div>
+  const requestAiSuggestion = async (resourceId) => {
+    setIsSuggesting(true);
+    try {
+      const data = await aiService.suggestStaffForResource(resourceId);
+      setAiSuggestedStaff(data?.suggestion || null);
+      notify('AI suggestion ready');
+    } catch (error) {
+      notify(error?.response?.data?.message || 'AI suggestion failed', 'error');
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
 
-                            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
-                                {editTarget ? <><Edit2 size={16} /> Update Resource</> : <><Plus size={16} /> Create Resource</>}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
+  const assignResource = async () => {
+    if (!assignStaffId || !showAssignModal) return;
+    try {
+      await api.put(`/resources/${showAssignModal}/assign`, { staffId: assignStaffId });
+      notify('Resource assigned');
+      setShowAssignModal(null);
+      setAssignStaffId('');
+      setAiSuggestedStaff(null);
+      await loadResources();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Assignment failed', 'error');
+    }
+  };
 
-            <main className="max-w-6xl mx-auto px-6 mt-12 animate-fade-in">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold mb-1 flex items-center gap-3">
-                            <Package className="text-primary" size={36} />
-                            Resource Management
-                        </h1>
-                        <p className="text-text-muted">Track vehicles, equipment, and field resources across all operations.</p>
-                    </div>
-                    <button onClick={openCreate} className="btn-primary flex items-center gap-2 self-start sm:self-auto whitespace-nowrap">
-                        <Plus size={18} /> Add Resource
-                    </button>
-                </div>
+  return (
+    <div className="min-h-screen pb-16">
+      <Navbar />
 
-                {/* Status Stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                    {STATUS_OPTIONS.map(s => (
-                        <div
-                            key={s}
-                            onClick={() => setStatusFilter(statusFilter === s ? '' : s)}
-                            className={`glass-morphism p-4 cursor-pointer transition-all hover:scale-105 border-2
-                                ${statusFilter === s ? 'border-primary/60' : 'border-transparent'}`}
-                        >
-                            <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${statusStyle[s]}`}>
-                                {s}
-                            </span>
-                            <p className="text-2xl font-bold mt-2">{statusCounts[s] ?? 0}</p>
-                            <p className="text-xs text-text-muted">Resources</p>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Filter Bar */}
-                <div className="glass-morphism p-4 mb-6 flex items-center gap-4">
-                    <Filter size={16} className="text-text-muted flex-shrink-0" />
-                    <div className="relative">
-                        <select
-                            className="bg-surface-light border border-border text-text py-1.5 px-3 pr-8 rounded-lg text-sm outline-none focus:border-primary appearance-none"
-                            value={statusFilter}
-                            onChange={e => setStatusFilter(e.target.value)}
-                        >
-                            <option value="">All Statuses</option>
-                            {STATUS_OPTIONS.map(s => (
-                                <option key={s} value={s}>{s}</option>
-                            ))}
-                        </select>
-                        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                    </div>
-                    {statusFilter && (
-                        <button
-                            onClick={() => setStatusFilter('')}
-                            className="flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
-                        >
-                            <X size={14} /> Clear filter
-                        </button>
-                    )}
-                    <button
-                        onClick={fetchResources}
-                        className="ml-auto flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors"
-                    >
-                        <RefreshCw size={14} /> Refresh
-                    </button>
-                </div>
-
-                {/* Resources Grid */}
-                {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <div className="text-center">
-                            <Loader2 className="animate-spin mx-auto text-primary mb-3" size={32} />
-                            <p className="text-text-muted">Loading resources...</p>
-                        </div>
-                    </div>
-                ) : resources.length === 0 ? (
-                    <div className="glass-morphism p-16 text-center">
-                        <Package className="mx-auto text-text-muted mb-4 opacity-40" size={48} />
-                        <p className="text-text-muted text-lg">No resources found{statusFilter ? ` with status "${statusFilter}"` : ''}.</p>
-                        {!statusFilter && (
-                            <button onClick={openCreate} className="btn-primary mt-4 inline-flex items-center gap-2">
-                                <Plus size={16} /> Add your first resource
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {resources.map(r => (
-                            <div key={r._id} className="glass-morphism p-5 flex flex-col gap-4 hover:border-primary/30 border border-transparent transition-all">
-                                {/* Top row */}
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                            <Package className="text-primary" size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-white text-sm">{r.type?.replace(/_/g, ' ')}</p>
-                                            <p className="text-xs text-text-muted truncate max-w-[140px]">{r._id}</p>
-                                        </div>
-                                    </div>
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyle[r.status] || 'bg-surface-light text-text-muted'}`}>
-                                        {r.status}
-                                    </span>
-                                </div>
-
-                                {/* Description */}
-                                <p className="text-sm text-text-muted line-clamp-2">{r.description || 'No description provided.'}</p>
-
-                                {/* Assigned To */}
-                                {r.assignedTo && (
-                                    <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
-                                        <UserCog size={14} className="text-blue-400 flex-shrink-0" />
-                                        <span className="text-xs text-blue-300 truncate">
-                                            Assigned to: <span className="font-semibold">{r.assignedTo?.userId?.name || r.assignedTo?.department || 'Staff'}</span>
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* Metadata preview */}
-                                {r.metadata && Object.keys(r.metadata).length > 0 && (
-                                    <div className="bg-surface-light/60 rounded-lg p-2.5 text-xs font-mono text-text-muted overflow-hidden">
-                                        {Object.entries(r.metadata).slice(0, 2).map(([k, v]) => (
-                                            <div key={k}><span className="text-primary">{k}</span>: {String(v)}</div>
-                                        ))}
-                                        {Object.keys(r.metadata).length > 2 && (
-                                            <div className="text-text-muted/60">+{Object.keys(r.metadata).length - 2} more fields</div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Actions */}
-                                <div className="flex gap-2 pt-1 border-t border-white/5 mt-auto">
-                                    <button
-                                        onClick={() => openEdit(r)}
-                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg text-text-muted hover:bg-primary/10 hover:text-primary transition-colors"
-                                    >
-                                        <Edit2 size={14} /> Edit
-                                    </button>
-                                    {r.status !== 'ARCHIVED' && (
-                                        <button
-                                            onClick={() => { setShowAssignModal(r._id); setAssignStaffId(''); }}
-                                            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg text-text-muted hover:bg-blue-500/10 hover:text-blue-400 transition-colors"
-                                        >
-                                            <UserCog size={14} /> Assign
-                                        </button>
-                                    )}
-                                    {r.status !== 'ARCHIVED' && (
-                                        <button
-                                            onClick={() => setConfirmArchive(r._id)}
-                                            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg text-text-muted hover:bg-amber-500/10 hover:text-amber-400 transition-colors"
-                                        >
-                                            <Archive size={14} /> Archive
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </main>
+      {toast && (
+        <div className={`fixed right-6 top-6 z-50 rounded-xl px-4 py-3 text-sm text-white shadow-2xl ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+          {toast.message}
         </div>
-    );
-};
+      )}
+
+      {pendingArchiveId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
+            <h3 className="mb-2 text-xl font-bold">Archive Resource</h3>
+            <p className="mb-6 text-sm text-text-muted">This moves the resource to archived state.</p>
+            <div className="flex gap-3">
+              <button onClick={archiveResource} className="flex-1 rounded-lg bg-amber-600 py-2.5 font-semibold text-white">Archive</button>
+              <button onClick={() => setPendingArchiveId(null)} className="flex-1 rounded-lg bg-surface-light py-2.5 font-semibold text-text">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Assign Resource</h3>
+              <button onClick={() => setShowAssignModal(null)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <button
+              onClick={() => requestAiSuggestion(showAssignModal)}
+              disabled={isSuggesting}
+              className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2.5 text-sm font-semibold text-purple-300 disabled:opacity-60"
+            >
+              {isSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+              Get AI Staff Suggestion
+            </button>
+
+            {aiSuggestedStaff && (
+              <div className="mb-4 rounded-lg border border-purple-500/30 bg-purple-500/10 p-3 text-sm">
+                <p className="mb-2 font-semibold text-purple-300">AI Recommendation</p>
+                <p className="text-text-muted">{aiSuggestedStaff?.reasoning || String(aiSuggestedStaff)}</p>
+                <button
+                  onClick={() => setAssignStaffId(aiSuggestedStaff?.staffId || aiSuggestedStaff?._id || '')}
+                  className="mt-3 inline-flex items-center gap-1 rounded-md bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white"
+                >
+                  <Check size={14} /> Use suggestion
+                </button>
+              </div>
+            )}
+
+            <label className="mb-1 block text-sm font-medium text-text-muted">Select Staff</label>
+            <select className="input-field" value={assignStaffId} onChange={(e) => setAssignStaffId(e.target.value)}>
+              <option value="">Select staff member</option>
+              {staff.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s?.userId?.name || 'Unknown'} ({(s?.department || '').replace('_', ' ')})
+                </option>
+              ))}
+            </select>
+
+            <button onClick={assignResource} disabled={!assignStaffId} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
+              Confirm Assignment
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="glass-morphism w-full max-w-xl rounded-2xl p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-xl font-bold">{editing ? 'Update Resource' : 'Add New Resource'}</h3>
+              <button onClick={() => setShowModal(false)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form className="space-y-4" onSubmit={saveResource}>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-text-muted">Resource Type</label>
+                <select className="input-field" value={form.type} onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}>
+                  {RESOURCE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-text-muted">Description</label>
+                <textarea
+                  className="input-field resize-none"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Resource details"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-muted">Serial Number</label>
+                  <input
+                    className="input-field font-mono"
+                    value={form.serialNumber}
+                    onChange={(e) => setForm((prev) => ({ ...prev, serialNumber: e.target.value }))}
+                    placeholder="SN-001"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-muted">Location</label>
+                  <input
+                    className="input-field"
+                    value={form.location}
+                    onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
+                    placeholder="North Zone"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary flex w-full items-center justify-center gap-2">
+                {editing ? <Edit2 size={16} /> : <Plus size={16} />}
+                {editing ? 'Update Resource' : 'Create Resource'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto mt-12 max-w-6xl px-6">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-4xl font-black">Resource Command</h1>
+            <p className="text-text-muted">Manage assets with dedicated metadata and AI-assisted assignment.</p>
+          </div>
+          <div className="flex gap-2">
+            <Link to="/ai-insights" className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-300">
+              Open AI Insights
+            </Link>
+            <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2"><Plus size={16} /> Add Resource</button>
+          </div>
+        </div>
+
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {STATUS_OPTIONS.map((status) => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(statusFilter === status ? '' : status)}
+              className={`rounded-xl border p-3 text-left ${statusFilter === status ? 'border-primary bg-primary/10' : 'border-white/10 bg-surface/30'}`}
+            >
+              <div className={`mb-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge[status]}`}>{status}</div>
+              <div className="text-2xl font-bold">{statusCounts[status] || 0}</div>
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleAiSearch} className="mb-8 flex items-center gap-2 rounded-2xl border border-white/10 bg-surface/40 p-3">
+          <Sparkles size={16} className="text-purple-300" />
+          <input
+            className="w-full bg-transparent outline-none"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Semantic AI search for resources"
+          />
+          <button type="submit" disabled={isAiSearching} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            {isAiSearching ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {loading && (
+            <div className="col-span-full py-20 text-center text-text-muted">
+              <Loader2 size={28} className="mx-auto mb-3 animate-spin" /> Loading resources...
+            </div>
+          )}
+
+          {!loading && resources.length === 0 && (
+            <div className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center">
+              <Archive size={40} className="mx-auto mb-3 text-text-muted" />
+              <p className="text-text-muted">No resources found.</p>
+            </div>
+          )}
+
+          {!loading && resources.map((r) => (
+            <article key={r._id} className="glass-morphism rounded-2xl border border-white/10 p-5">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-text-muted">{(r.type || '').replace(/_/g, ' ')}</p>
+                  <h3 className="text-lg font-bold leading-tight">{r.description}</h3>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusBadge[r.status] || statusBadge.ARCHIVED}`}>
+                  {r.status}
+                </span>
+              </div>
+
+              <div className="mb-4 space-y-2 rounded-xl border border-white/10 bg-black/20 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-muted">Serial</span>
+                  <span className="font-mono">{r.metadata?.serialNumber || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-text-muted">Location</span>
+                  <span>{r.metadata?.location || 'Unknown'}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {r.status !== 'ARCHIVED' && (
+                  <button onClick={() => openAssign(r._id)} className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                    <span className="inline-flex items-center gap-1"><UserCog size={14} /> Assign</span>
+                  </button>
+                )}
+                <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
+                  <Edit2 size={14} />
+                </button>
+                {r.status !== 'ARCHIVED' && (
+                  <button onClick={() => setPendingArchiveId(r._id)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-amber-500/40 hover:text-amber-400">
+                    <Archive size={14} />
+                  </button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default ResourceManagement;
