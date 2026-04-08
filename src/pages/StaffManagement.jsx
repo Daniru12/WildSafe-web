@@ -1,365 +1,275 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Edit2, Loader2, Plus, Search, Shield, Trash2, UserPlus, Users, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
-import {
-    Users, Plus, Trash2, Edit2, X, Check, AlertCircle,
-    Loader2, UserCheck, Shield, ChevronDown
-} from 'lucide-react';
 
 const DEPARTMENTS = ['PATROL', 'INVESTIGATION', 'ADMINISTRATION', 'WILDLIFE_RESCUE', 'ANALYTICS'];
 const PERMISSIONS = ['VIEW_INCIDENTS', 'MANAGE_INCIDENTS', 'VIEW_CASES', 'MANAGE_CASES', 'VIEW_RESOURCES', 'MANAGE_RESOURCES', 'VIEW_ANALYTICS', 'MANAGE_ALERTS'];
 
-const StaffManagement = () => {
-    const [staff, setStaff] = useState([]);
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [editTarget, setEditTarget] = useState(null);
-    const [toast, setToast] = useState(null);
-    const [confirmDelete, setConfirmDelete] = useState(null);
+function StaffManagement() {
+  const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [toast, setToast] = useState(null);
 
-    const [form, setForm] = useState({
-        userId: '',
-        department: DEPARTMENTS[0],
-        permissions: []
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+
+  const [form, setForm] = useState({
+    userId: '',
+    department: DEPARTMENTS[0],
+    permissions: []
+  });
+
+  const notify = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const loadStaff = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/staff');
+      setStaff(Array.isArray(data) ? data : []);
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Failed to load staff', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStaff();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return staff;
+    const q = query.toLowerCase();
+    return staff.filter((item) => {
+      const name = item?.userId?.name || '';
+      const email = item?.userId?.email || '';
+      const dept = item?.department || '';
+      return name.toLowerCase().includes(q) || email.toLowerCase().includes(q) || dept.toLowerCase().includes(q);
     });
+  }, [query, staff]);
 
-    const showToast = (msg, type = 'success') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
-    };
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ userId: '', department: DEPARTMENTS[0], permissions: [] });
+    setShowModal(true);
+  };
 
-    const fetchStaff = async () => {
-        try {
-            const res = await api.get('/staff');
-            setStaff(res.data);
-        } catch {
-            showToast('Failed to load staff', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const openEdit = (row) => {
+    setEditing(row);
+    setForm({
+      userId: row?.userId?._id || row?.userId || '',
+      department: row?.department || DEPARTMENTS[0],
+      permissions: Array.isArray(row?.permissions) ? row.permissions : []
+    });
+    setShowModal(true);
+  };
 
-    const fetchUsers = async () => {
-        try {
-            // Get available users (not already staff) - best effort
-            const res = await api.get('/staff');
-            // We'll populate from staff's userId
-            setUsers([]);
-        } catch {
-            // silent
-        }
-    };
+  const togglePermission = (permission) => {
+    setForm((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(permission)
+        ? prev.permissions.filter((p) => p !== permission)
+        : [...prev.permissions, permission]
+    }));
+  };
 
-    useEffect(() => {
-        fetchStaff();
-        fetchUsers();
-    }, []);
-
-    const openCreate = () => {
-        setEditTarget(null);
-        setForm({ userId: '', department: DEPARTMENTS[0], permissions: [] });
-        setShowModal(true);
-    };
-
-    const openEdit = (s) => {
-        setEditTarget(s);
-        setForm({
-            userId: s.userId?._id || s.userId,
-            department: s.department,
-            permissions: s.permissions || []
+  const saveStaff = async (event) => {
+    event.preventDefault();
+    try {
+      if (editing?._id) {
+        await api.put(`/staff/${editing._id}`, {
+          department: form.department,
+          permissions: form.permissions
         });
-        setShowModal(true);
-    };
+        notify('Staff updated');
+      } else {
+        await api.post('/staff', form);
+        notify('Staff added');
+      }
+      setShowModal(false);
+      await loadStaff();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Save failed', 'error');
+    }
+  };
 
-    const togglePermission = (p) => {
-        setForm(f => ({
-            ...f,
-            permissions: f.permissions.includes(p)
-                ? f.permissions.filter(x => x !== p)
-                : [...f.permissions, p]
-        }));
-    };
+  const removeStaff = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await api.delete(`/staff/${pendingDeleteId}`);
+      notify('Staff removed');
+      setPendingDeleteId(null);
+      await loadStaff();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Delete failed', 'error');
+    }
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            if (editTarget) {
-                await api.put(`/staff/${editTarget._id}`, {
-                    department: form.department,
-                    permissions: form.permissions
-                });
-                showToast('Staff updated successfully');
-            } else {
-                await api.post('/staff', form);
-                showToast('Staff member added and promoted to OFFICER');
-            }
-            setShowModal(false);
-            fetchStaff();
-        } catch (err) {
-            showToast(err?.response?.data?.message || 'Operation failed', 'error');
-        }
-    };
+  return (
+    <div className="min-h-screen pb-16">
+      <Navbar />
 
-    const handleDelete = async (id) => {
-        try {
-            await api.delete(`/staff/${id}`);
-            showToast('Staff member removed');
-            setConfirmDelete(null);
-            fetchStaff();
-        } catch (err) {
-            showToast(err?.response?.data?.message || 'Delete failed', 'error');
-        }
-    };
-
-    const getDeptColor = (dept) => {
-        const map = {
-            PATROL: 'bg-blue-500/20 text-blue-400',
-            INVESTIGATION: 'bg-purple-500/20 text-purple-400',
-            ADMINISTRATION: 'bg-amber-500/20 text-amber-400',
-            WILDLIFE_RESCUE: 'bg-emerald-500/20 text-emerald-400',
-            ANALYTICS: 'bg-cyan-500/20 text-cyan-400',
-        };
-        return map[dept] || 'bg-surface-light text-text-muted';
-    };
-
-    return (
-        <div className="min-h-screen pb-16">
-            <Navbar />
-
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-white animate-fade-in
-                    ${toast.type === 'error' ? 'bg-danger/90' : 'bg-primary/90'}`}>
-                    {toast.type === 'error' ? <AlertCircle size={18} /> : <Check size={18} />}
-                    <span className="font-medium text-sm">{toast.msg}</span>
-                </div>
-            )}
-
-            {/* Confirm Delete Modal */}
-            {confirmDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="glass-morphism p-8 max-w-sm w-full mx-4 animate-fade-in">
-                        <h3 className="text-xl font-bold mb-2">Remove Staff Member?</h3>
-                        <p className="text-text-muted text-sm mb-6">
-                            This will remove the staff record. The user account will remain, but their OFFICER role may need to be updated manually.
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleDelete(confirmDelete)}
-                                className="flex-1 bg-danger hover:bg-red-600 text-white py-2.5 rounded-lg font-semibold transition-colors"
-                            >
-                                Remove
-                            </button>
-                            <button
-                                onClick={() => setConfirmDelete(null)}
-                                className="flex-1 bg-surface-light hover:bg-border text-text py-2.5 rounded-lg font-semibold transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Add/Edit Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="glass-morphism p-8 max-w-lg w-full mx-4 animate-fade-in max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">
-                                {editTarget ? 'Edit Staff Member' : 'Add New Staff Member'}
-                            </h3>
-                            <button onClick={() => setShowModal(false)} className="text-text-muted hover:text-white transition-colors p-1">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {!editTarget && (
-                                <div>
-                                    <label className="block text-sm font-medium text-text-muted mb-1.5">User ID</label>
-                                    <input
-                                        className="input-field"
-                                        placeholder="Paste user's MongoDB ObjectId"
-                                        value={form.userId}
-                                        onChange={e => setForm(f => ({ ...f, userId: e.target.value }))}
-                                        required
-                                    />
-                                    <p className="text-xs text-text-muted mt-1">The user will be automatically promoted to OFFICER role.</p>
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Department</label>
-                                <div className="relative">
-                                    <select
-                                        className="input-field appearance-none pr-10"
-                                        value={form.department}
-                                        onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
-                                    >
-                                        {DEPARTMENTS.map(d => (
-                                            <option key={d} value={d}>{d.replace('_', ' ')}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-2">Permissions</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {PERMISSIONS.map(p => (
-                                        <label key={p} className="flex items-center gap-2 cursor-pointer group">
-                                            <div
-                                                onClick={() => togglePermission(p)}
-                                                className={`w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer
-                                                    ${form.permissions.includes(p)
-                                                        ? 'bg-primary border-primary'
-                                                        : 'border-border group-hover:border-primary/50'}`}
-                                            >
-                                                {form.permissions.includes(p) && <Check size={10} className="text-white" />}
-                                            </div>
-                                            <span className="text-xs text-text-muted group-hover:text-text transition-colors">{p.replace(/_/g, ' ')}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
-                                {editTarget ? <><Edit2 size={16} /> Update Staff</> : <><Plus size={16} /> Add Staff Member</>}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            <main className="max-w-6xl mx-auto px-6 mt-12 animate-fade-in">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold mb-1 flex items-center gap-3">
-                            <Users className="text-primary" size={36} />
-                            Staff Management
-                        </h1>
-                        <p className="text-text-muted">Manage conservation officers and staff members across departments.</p>
-                    </div>
-                    <button
-                        onClick={openCreate}
-                        className="btn-primary flex items-center gap-2 self-start sm:self-auto whitespace-nowrap"
-                    >
-                        <Plus size={18} />
-                        Add Staff Member
-                    </button>
-                </div>
-
-                {/* Stats Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                    {DEPARTMENTS.map(dept => {
-                        const count = staff.filter(s => s.department === dept).length;
-                        return (
-                            <div key={dept} className={`glass-morphism p-4 flex flex-col gap-1`}>
-                                <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${getDeptColor(dept)}`}>
-                                    {dept.replace('_', ' ')}
-                                </span>
-                                <span className="text-2xl font-bold mt-1">{count}</span>
-                                <span className="text-xs text-text-muted">Members</span>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Staff Table */}
-                <div className="glass-morphism overflow-hidden">
-                    <table className="w-full border-collapse text-left">
-                        <thead>
-                            <tr className="bg-white/5 border-b border-white/10">
-                                <th className="p-5 text-sm font-semibold text-text-muted uppercase tracking-wider">Staff Member</th>
-                                <th className="p-5 text-sm font-semibold text-text-muted uppercase tracking-wider">Email</th>
-                                <th className="p-5 text-sm font-semibold text-text-muted uppercase tracking-wider">Department</th>
-                                <th className="p-5 text-sm font-semibold text-text-muted uppercase tracking-wider">Permissions</th>
-                                <th className="p-5 text-sm font-semibold text-text-muted uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/10">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan="5" className="p-16 text-center">
-                                        <Loader2 className="animate-spin mx-auto text-primary mb-3" size={28} />
-                                        <span className="text-text-muted">Loading staff...</span>
-                                    </td>
-                                </tr>
-                            ) : staff.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="p-16 text-center">
-                                        <UserCheck className="mx-auto text-text-muted mb-3 opacity-40" size={40} />
-                                        <p className="text-text-muted">No staff members yet. Add your first one!</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                staff.map(s => (
-                                    <tr key={s._id} className="hover:bg-white/5 transition-colors">
-                                        <td className="p-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-                                                    {(s.userId?.name || 'S')[0].toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-white">{s.userId?.name || 'N/A'}</p>
-                                                    <p className="text-xs text-text-muted">{s._id}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-5 text-text-muted text-sm">{s.userId?.email || '—'}</td>
-                                        <td className="p-5">
-                                            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getDeptColor(s.department)}`}>
-                                                {s.department?.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="p-5">
-                                            <div className="flex flex-wrap gap-1 max-w-xs">
-                                                {(s.permissions || []).slice(0, 3).map(p => (
-                                                    <span key={p} className="text-xs bg-surface-light text-text-muted px-2 py-0.5 rounded">
-                                                        {p.replace(/_/g, ' ')}
-                                                    </span>
-                                                ))}
-                                                {(s.permissions || []).length > 3 && (
-                                                    <span className="text-xs bg-surface-light text-primary px-2 py-0.5 rounded">
-                                                        +{s.permissions.length - 3} more
-                                                    </span>
-                                                )}
-                                                {(!s.permissions || s.permissions.length === 0) && (
-                                                    <span className="text-xs text-text-muted italic">None assigned</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="p-5">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => openEdit(s)}
-                                                    className="p-2 rounded-lg text-text-muted hover:bg-primary/10 hover:text-primary transition-colors"
-                                                    title="Edit"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => setConfirmDelete(s._id)}
-                                                    className="p-2 rounded-lg text-text-muted hover:bg-danger/10 hover:text-danger transition-colors"
-                                                    title="Remove"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </main>
+      {toast && (
+        <div className={`fixed right-6 top-6 z-50 rounded-xl px-4 py-3 text-sm text-white shadow-2xl ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+          {toast.message}
         </div>
-    );
-};
+      )}
+
+      {pendingDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
+            <h3 className="mb-2 text-xl font-bold">Remove Staff Member</h3>
+            <p className="mb-6 text-sm text-text-muted">This removes the staff profile from operations.</p>
+            <div className="flex gap-3">
+              <button onClick={removeStaff} className="flex-1 rounded-lg bg-red-600 py-2.5 font-semibold text-white">Remove</button>
+              <button onClick={() => setPendingDeleteId(null)} className="flex-1 rounded-lg bg-surface-light py-2.5 font-semibold text-text">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="glass-morphism w-full max-w-2xl rounded-2xl p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-xl font-bold">{editing ? 'Edit Staff' : 'Add Staff'}</h3>
+              <button onClick={() => setShowModal(false)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form className="space-y-5" onSubmit={saveStaff}>
+              {!editing && (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-muted">User ID</label>
+                  <input
+                    value={form.userId}
+                    onChange={(e) => setForm((prev) => ({ ...prev, userId: e.target.value }))}
+                    className="input-field"
+                    placeholder="Paste MongoDB ObjectId"
+                    required
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-text-muted">Department</label>
+                <select
+                  value={form.department}
+                  onChange={(e) => setForm((prev) => ({ ...prev, department: e.target.value }))}
+                  className="input-field"
+                >
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d} value={d}>{d.replace('_', ' ')}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-text-muted">Permissions</label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {PERMISSIONS.map((p) => (
+                    <button
+                      type="button"
+                      key={p}
+                      onClick={() => togglePermission(p)}
+                      className={`rounded-lg border px-3 py-2 text-left text-xs transition ${form.permissions.includes(p) ? 'border-primary bg-primary/10 text-white' : 'border-white/10 bg-surface/40 text-text-muted'}`}
+                    >
+                      {p.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary flex w-full items-center justify-center gap-2">
+                {editing ? <Edit2 size={16} /> : <UserPlus size={16} />}
+                {editing ? 'Update Staff' : 'Create Staff'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto mt-12 max-w-6xl px-6">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-4xl font-black">Staff Operations</h1>
+            <p className="text-text-muted">Manage teams, departments, and permissions in one place.</p>
+          </div>
+          <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
+            <Plus size={16} /> Add Staff
+          </button>
+        </div>
+
+        <div className="mb-8 flex items-center gap-3 rounded-2xl border border-white/10 bg-surface/40 p-4">
+          <Search size={18} className="text-text-muted" />
+          <input
+            className="w-full bg-transparent outline-none"
+            placeholder="Search by name, email, or department"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {loading && (
+            <div className="col-span-full py-20 text-center text-text-muted">
+              <Loader2 size={28} className="mx-auto mb-3 animate-spin" /> Loading staff...
+            </div>
+          )}
+
+          {!loading && filtered.length === 0 && (
+            <div className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center">
+              <Users size={40} className="mx-auto mb-3 text-text-muted" />
+              <p className="text-text-muted">No matching staff records.</p>
+            </div>
+          )}
+
+          {!loading && filtered.map((row) => (
+            <article key={row._id} className="glass-morphism rounded-2xl border border-white/10 p-5">
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-bold">{row?.userId?.name || 'Unknown'}</h3>
+                  <p className="text-xs text-text-muted">{row?.userId?.email || 'No email'}</p>
+                </div>
+                <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                  {row?.department?.replace('_', ' ') || 'N/A'}
+                </span>
+              </div>
+
+              <div className="mb-5 flex flex-wrap gap-1.5">
+                {(row.permissions || []).slice(0, 4).map((p) => (
+                  <span key={p} className="rounded border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase text-text-muted">
+                    {p.replace(/_/g, ' ')}
+                  </span>
+                ))}
+                {(row.permissions || []).length > 4 && (
+                  <span className="rounded border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase text-text-muted">
+                    +{row.permissions.length - 4} more
+                  </span>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={() => openEdit(row)} className="flex-1 rounded-lg border border-white/10 bg-surface/40 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
+                  <span className="inline-flex items-center gap-1"><Edit2 size={14} /> Edit</span>
+                </button>
+                <button onClick={() => setPendingDeleteId(row._id)} className="flex-1 rounded-lg border border-white/10 bg-surface/40 px-3 py-2 text-sm hover:border-red-500/40 hover:text-red-400">
+                  <span className="inline-flex items-center gap-1"><Trash2 size={14} /> Remove</span>
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default StaffManagement;

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
@@ -18,6 +18,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
 import StaffManagement from './pages/StaffManagement';
 import ResourceManagement from './pages/ResourceManagement';
+import AiInsights from './pages/AiInsights';
 import UserManagement from './pages/UserManagement';
 import AdminLayout from './components/AdminLayout';
 
@@ -197,12 +198,23 @@ function App() {
             }
           />
 
-          <Route
+                    <Route
             path="/resources"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
                 <RoleBasedLayout>
                   <ResourceManagement />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ai-insights"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <AiInsights />
                 </RoleBasedLayout>
               </ProtectedRoute>
             }
@@ -217,3 +229,4 @@ function App() {
 }
 
 export default App;
+
