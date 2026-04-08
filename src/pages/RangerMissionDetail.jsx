@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
@@ -27,6 +27,7 @@ function resolveMediaUrl(url) {
 
 const RangerMissionDetail = () => {
     const { caseId: rawCaseId } = useParams();
+    const location = useLocation();
     const caseId = rawCaseId ? decodeURIComponent(rawCaseId) : '';
     const navPt = useFixedNavOffsetClass();
 
@@ -95,6 +96,15 @@ const RangerMissionDetail = () => {
         if (!caseId) return;
         fetchSuggestions();
     }, [caseId, fetchSuggestions]);
+
+    useEffect(() => {
+        if (location.hash !== '#groq-suggested-steps') return;
+        if (loading || !detail) return;
+        const timer = window.setTimeout(() => {
+            document.getElementById('groq-suggested-steps')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+        return () => clearTimeout(timer);
+    }, [location.hash, loading, detail]);
 
     const runAction = async (key, fn) => {
         setBusyKey(key);
@@ -308,11 +318,17 @@ const RangerMissionDetail = () => {
                             )}
                         </div>
 
-                        <div className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80">
+                        <div
+                            id="groq-suggested-steps"
+                            className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80 scroll-mt-28"
+                        >
                             <div className="flex items-center justify-between gap-4 mb-4">
                                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                                     <ListChecks className="text-primary" size={22} />
                                     Suggested actions
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary/90 ml-1">
+                                        Groq AI
+                                    </span>
                                 </h2>
                                 <button
                                     type="button"

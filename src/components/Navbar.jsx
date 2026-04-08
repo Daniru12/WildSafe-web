@@ -36,6 +36,8 @@ const Navbar = () => {
     ];
 
     const isActive = (path) => location.pathname === path;
+    const isGroqAiSteps =
+        location.pathname === '/ranger-ai-steps' || location.pathname.startsWith('/ranger-ai-steps/');
 
     return (
         <nav className={`
@@ -109,6 +111,16 @@ const Navbar = () => {
                                         <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
                                             <Navigation2 size={18} />
                                             <span>Ranger Missions</span>
+                                        </Link>
+                                        <Link
+                                            to="/ranger-ai-steps"
+                                            className={`
+                                                flex items-center gap-2 text-sm font-bold transition-all
+                                                ${isGroqAiSteps ? 'text-primary' : 'text-text-muted hover:text-white'}
+                                            `}
+                                        >
+                                            <Sparkles size={18} />
+                                            <span>Groq AI steps</span>
                                         </Link>
                                         <div className="flex items-center gap-4">
                                             <NotificationDropdown />
@@ -203,6 +215,16 @@ const Navbar = () => {
                                     >
                                         <Navigation2 size={20} />
                                         Ranger Missions
+                                    </Link>
+                                )}
+                                {user?.role === 'OFFICER' && (
+                                    <Link 
+                                        to="/ranger-ai-steps" 
+                                        onClick={() => setIsOpen(false)}
+                                        className={`flex items-center gap-3 font-bold ${isGroqAiSteps ? 'text-primary' : 'text-white'}`}
+                                    >
+                                        <Sparkles size={20} />
+                                        Groq AI steps
                                     </Link>
                                 )}
                                 <Link 

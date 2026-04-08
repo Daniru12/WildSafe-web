@@ -15,6 +15,7 @@ import CaseManagement from './pages/CaseManagement';
 import CaseDetails from './pages/CaseDetails';
 import RangerMissions from './pages/RangerMissions';
 import RangerMissionDetail from './pages/RangerMissionDetail';
+import RangerGroqAiHub from './pages/RangerGroqAiHub';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
 import StaffManagement from './pages/StaffManagement';
@@ -164,6 +165,17 @@ function App() {
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
                 <RoleBasedLayout>
                   <RangerMissionDetail />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ranger-ai-steps"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <RangerGroqAiHub />
                 </RoleBasedLayout>
               </ProtectedRoute>
             }

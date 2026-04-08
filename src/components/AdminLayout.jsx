@@ -23,6 +23,7 @@ const adminNavItems = [
     { label: 'Citizen Registry', to: '/users', icon: Users },
     { label: 'Case Control', to: '/case-management', icon: Shield },
     { label: 'Ranger Missions', to: '/ranger-missions', icon: Navigation2, matchPrefix: true },
+    { label: 'Groq AI steps', to: '/ranger-ai-steps', icon: Sparkles, matchPrefix: true },
     { label: 'Data Intelligence', to: '/analytics', icon: BarChart3 },
     { label: 'Asset Logistics', to: '/resources', icon: Package },
     { label: 'Field Staff', to: '/staff', icon: Users },
