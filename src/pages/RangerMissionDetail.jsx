@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import {
     ArrowLeft,
@@ -27,6 +28,7 @@ function resolveMediaUrl(url) {
 const RangerMissionDetail = () => {
     const { caseId: rawCaseId } = useParams();
     const caseId = rawCaseId ? decodeURIComponent(rawCaseId) : '';
+    const navPt = useFixedNavOffsetClass();
 
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -247,7 +249,7 @@ const RangerMissionDetail = () => {
     return (
         <div className="min-h-screen pb-20">
             <Navbar />
-            <div className="max-w-4xl mx-auto px-4 pt-8">
+            <div className={`max-w-4xl mx-auto px-4 ${navPt || 'pt-8'}`}>
                 <Link
                     to="/ranger-missions"
                     className="inline-flex items-center gap-2 text-text-muted hover:text-primary text-sm font-medium mb-6"

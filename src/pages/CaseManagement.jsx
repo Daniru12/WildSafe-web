@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { 
   FileText, 
@@ -35,6 +36,7 @@ import {
 
 const CaseManagement = () => {
     const navigate = useNavigate();
+    const navPt = useFixedNavOffsetClass();
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -297,7 +299,7 @@ const CaseManagement = () => {
         return (
             <div className="min-h-screen pb-16">
                 <Navbar />
-                <main className="max-w-7xl mx-auto px-6 mt-12">
+                <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                     <div className="flex items-center justify-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     </div>
@@ -309,7 +311,7 @@ const CaseManagement = () => {
     return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 mt-12 animate-fade-in">
+            <main className={`max-w-7xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div>

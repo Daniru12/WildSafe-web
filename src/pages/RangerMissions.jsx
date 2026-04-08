@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { Navigation2, ChevronLeft, ChevronRight, MapPin, AlertTriangle } from 'lucide-react';
 
@@ -29,6 +30,7 @@ const statusBadgeClass = (s) => {
 };
 
 const RangerMissions = () => {
+    const navPt = useFixedNavOffsetClass();
     const [rangerStatus, setRangerStatus] = useState('');
     const [page, setPage] = useState(1);
     const [cases, setCases] = useState([]);
@@ -65,7 +67,7 @@ const RangerMissions = () => {
     return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <div className="max-w-6xl mx-auto px-4 pt-8">
+            <div className={`max-w-6xl mx-auto px-4 ${navPt || 'pt-8'}`}>
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-white flex items-center gap-2">

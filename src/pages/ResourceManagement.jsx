@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import aiService from '../services/aiService';
 
@@ -16,6 +17,7 @@ const statusBadge = {
 };
 
 function ResourceManagement() {
+  const navPt = useFixedNavOffsetClass();
   const [resources, setResources] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -325,7 +327,7 @@ function ResourceManagement() {
         </div>
       )}
 
-      <main className="mx-auto mt-12 max-w-6xl px-6">
+      <main className={`mx-auto max-w-6xl px-6 ${navPt || 'mt-12'}`}>
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-4xl font-black">Resource Command</h1>

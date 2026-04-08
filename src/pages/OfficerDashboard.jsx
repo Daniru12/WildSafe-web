@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import {
     Navigation2,
     MapPin,
@@ -36,6 +37,7 @@ const statusStyle = (s) => {
 
 const OfficerDashboard = () => {
     const { user } = useAuth();
+    const navPt = useFixedNavOffsetClass();
     const [missions, setMissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -78,7 +80,7 @@ const OfficerDashboard = () => {
     return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <main className="max-w-6xl mx-auto px-6 mt-10 animate-fade-in">
+            <main className={`max-w-6xl mx-auto px-6 animate-fade-in ${navPt}`}>
                 <header className="mb-10">
                     <p className="text-primary text-sm font-bold uppercase tracking-widest mb-2">Field officer</p>
                     <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">

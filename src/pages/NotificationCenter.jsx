@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { 
   Bell, 
@@ -17,6 +19,7 @@ import {
 
 const NotificationCenter = () => {
     const navigate = useNavigate();
+    const navPt = useFixedNavOffsetClass();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -137,8 +140,11 @@ const NotificationCenter = () => {
     if (loading) {
         return (
             <div className="min-h-screen pb-16">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <Navbar />
+                <div className={`max-w-4xl mx-auto px-6 ${navPt || 'mt-12'}`}>
+                    <div className="flex items-center justify-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
                 </div>
             </div>
         );
@@ -146,7 +152,8 @@ const NotificationCenter = () => {
 
     return (
         <div className="min-h-screen pb-16">
-            <div className="max-w-4xl mx-auto px-6 mt-12 animate-fade-in">
+            <Navbar />
+            <div className={`max-w-4xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-3">
