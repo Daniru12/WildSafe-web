@@ -3,9 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from './NotificationDropdown';
 import { 
-    Shield, LogOut, LayoutDashboard, FileText, 
-    BarChart3, Menu, X, Globe, User, Plus, 
-    Package, Sparkles, ChevronDown, Navigation2 
+    LogOut, LayoutDashboard, Menu, X, Globe, User, Plus, 
+    Sparkles, ChevronDown, Navigation2 
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -107,21 +106,9 @@ const Navbar = () => {
 
                                 {user?.role === 'OFFICER' && (
                                     <>
-                                        <Link to="/case-management" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
-                                            <Shield size={18} />
-                                            <span>Case Management</span>
-                                        </Link>
                                         <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
                                             <Navigation2 size={18} />
                                             <span>Ranger Missions</span>
-                                        </Link>
-                                        <Link to="/resources" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
-                                            <Package size={18} />
-                                            <span>Resources</span>
-                                        </Link>
-                                        <Link to="/analytics" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
-                                            <BarChart3 size={18} />
-                                            <span>Analytics</span>
                                         </Link>
                                         <div className="flex items-center gap-4">
                                             <NotificationDropdown />
@@ -208,6 +195,16 @@ const Navbar = () => {
                                     <LayoutDashboard size={20} />
                                     Dashboard
                                 </Link>
+                                {user?.role === 'OFFICER' && (
+                                    <Link 
+                                        to="/ranger-missions" 
+                                        onClick={() => setIsOpen(false)}
+                                        className="flex items-center gap-3 text-white font-bold"
+                                    >
+                                        <Navigation2 size={20} />
+                                        Ranger Missions
+                                    </Link>
+                                )}
                                 <Link 
                                     to="/profile" 
                                     onClick={() => setIsOpen(false)}

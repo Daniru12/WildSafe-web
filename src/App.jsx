@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CitizenDashboard from './pages/CitizenDashboard';
 import OfficerDashboard from './pages/OfficerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import ReportIncident from './pages/ReportIncident';
 import ThreatReport from './pages/ThreatReport';
 import CaseManagement from './pages/CaseManagement';
@@ -48,15 +49,18 @@ const RoleBasedLayout = ({ children }) => {
   return children;
 };
 
-// Role-based Dashboard Switcher
+// Role-based Dashboard Switcher — ADMIN: command center + sidebar; OFFICER: ranger-focused home (navbar).
 const DashboardSelector = () => {
   const { user } = useAuth();
-  if (['OFFICER', 'ADMIN'].includes(user.role)) {
+  if (user?.role === 'ADMIN') {
     return (
       <RoleBasedLayout>
-        <OfficerDashboard />
+        <AdminDashboard />
       </RoleBasedLayout>
     );
+  }
+  if (user?.role === 'OFFICER') {
+    return <OfficerDashboard />;
   }
   return <CitizenDashboard />;
 };
