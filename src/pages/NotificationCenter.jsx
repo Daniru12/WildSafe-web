@@ -17,6 +17,8 @@ import {
 const TAB_ALL = 'ALL';
 const TAB_EMERGENCY = 'EMERGENCY';
 const TAB_ASSIGNED = 'ASSIGNED';
+const STATUS_UNREAD = 'UNREAD';
+const STATUS_READ = 'READ';
 
 const emergencyTypes = new Set(['NEW_INCIDENT', 'geo-alert', 'URGENT_ALERT']);
 const assignedTypes = new Set(['ASSIGNMENT', 'CASE_ASSIGNED']);
@@ -28,13 +30,13 @@ const NotificationCenter = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(TAB_ALL);
+  const [statusTab, setStatusTab] = useState(STATUS_UNREAD);
 
   const fetchUnreadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
-      params.append('isRead', 'false');
       params.append('limit', '200');
 
       const response = await api.get(`/notifications?${params.toString()}`);
@@ -75,31 +77,47 @@ const NotificationCenter = () => {
   };
 
   const filteredNotifications = useMemo(() => {
+    const statusFiltered = notifications.filter((notification) =>
+      statusTab === STATUS_UNREAD ? !notification.isRead : notification.isRead
+    );
+
     if (activeTab === TAB_EMERGENCY) {
-      return notifications.filter(isEmergency);
+      return statusFiltered.filter(isEmergency);
     }
     if (activeTab === TAB_ASSIGNED) {
-      return notifications.filter(isAssigned);
+      return statusFiltered.filter(isAssigned);
     }
-    return notifications;
-  }, [activeTab, notifications]);
+    return statusFiltered;
+  }, [activeTab, notifications, statusTab]);
 
   const emergencyCount = useMemo(
-    () => notifications.filter(isEmergency).length,
+    () => notifications.filter((n) => !n.isRead && isEmergency(n)).length,
     [notifications]
   );
 
   const assignedCount = useMemo(
-    () => notifications.filter(isAssigned).length,
+    () => notifications.filter((n) => !n.isRead && isAssigned(n)).length,
     [notifications]
   );
 
-  const unreadCount = notifications.length;
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications]
+  );
+
+  const readCount = useMemo(
+    () => notifications.filter((n) => n.isRead).length,
+    [notifications]
+  );
 
   const markAsRead = async (notificationId) => {
     try {
       await api.put(`/notifications/${notificationId}/read`);
-      setNotifications((prev) => prev.filter((notif) => notif._id !== notificationId));
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif._id === notificationId ? { ...notif, isRead: true } : notif
+        )
+      );
       window.dispatchEvent(new Event('notifications:updated'));
     } catch {
       setError('Failed to mark notification as read');
@@ -181,8 +199,8 @@ const NotificationCenter = () => {
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold">New Notifications</h1>
-              <p className="text-text-muted">Only unread notifications are shown here</p>
+              <h1 className="text-3xl font-bold">Notifications</h1>
+              <p className="text-text-muted">Switch between unread and read notifications using tabs.</p>
             </div>
           </div>
 
@@ -211,7 +229,17 @@ const NotificationCenter = () => {
           <div className="p-6 glass-morphism">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-text-muted">Emergency Alerts</p>
+                <p className="text-sm text-text-muted">Read</p>
+                <p className="text-2xl font-bold text-emerald-500">{readCount}</p>
+              </div>
+              <CheckCircle size={24} className="text-emerald-500" />
+            </div>
+          </div>
+
+          <div className="p-6 glass-morphism">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-muted">Unread Emergency</p>
                 <p className="text-2xl font-bold text-red-600">{emergencyCount}</p>
               </div>
               <AlertTriangle size={24} className="text-red-500" />
@@ -232,9 +260,33 @@ const NotificationCenter = () => {
         <div className="p-6 glass-morphism mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Filter size={20} className="text-primary" />
-            <h3 className="text-lg font-semibold">Notification Tabs</h3>
+            <h3 className="text-lg font-semibold">Status Tabs</h3>
           </div>
 
+          <div className="flex flex-wrap gap-3 mb-4">
+            <button
+              onClick={() => setStatusTab(STATUS_UNREAD)}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                statusTab === STATUS_UNREAD
+                  ? 'bg-primary text-white'
+                  : 'border border-border hover:bg-surface-light'
+              }`}
+            >
+              Unread ({unreadCount})
+            </button>
+            <button
+              onClick={() => setStatusTab(STATUS_READ)}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                statusTab === STATUS_READ
+                  ? 'bg-primary text-white'
+                  : 'border border-border hover:bg-surface-light'
+              }`}
+            >
+              Read ({readCount})
+            </button>
+          </div>
+
+          <h3 className="text-lg font-semibold mb-3">Type Tabs</h3>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setActiveTab(TAB_ALL)}
@@ -244,7 +296,7 @@ const NotificationCenter = () => {
                   : 'border border-border hover:bg-surface-light'
               }`}
             >
-              All New ({unreadCount})
+              All ({statusTab === STATUS_UNREAD ? unreadCount : readCount})
             </button>
             <button
               onClick={() => setActiveTab(TAB_EMERGENCY)}
@@ -254,7 +306,7 @@ const NotificationCenter = () => {
                   : 'border border-border hover:bg-surface-light'
               }`}
             >
-              Emergency Alerts ({emergencyCount})
+              Emergency Alerts
             </button>
             <button
               onClick={() => setActiveTab(TAB_ASSIGNED)}
@@ -264,7 +316,7 @@ const NotificationCenter = () => {
                   : 'border border-border hover:bg-surface-light'
               }`}
             >
-              Assigned Case Notifications ({assignedCount})
+              Assigned Case Notifications
             </button>
           </div>
         </div>
@@ -279,8 +331,16 @@ const NotificationCenter = () => {
           {filteredNotifications.length === 0 ? (
             <div className="p-12 text-center text-text-muted">
               <CheckCircle size={48} className="mx-auto mb-4 opacity-70 text-green-500" />
-              <p>No unread notifications in this tab</p>
-              <p className="text-sm mt-2">New incoming notifications will appear here automatically.</p>
+              <p>
+                {statusTab === STATUS_UNREAD
+                  ? 'No unread notifications in this tab'
+                  : 'No read notifications in this tab'}
+              </p>
+              <p className="text-sm mt-2">
+                {statusTab === STATUS_UNREAD
+                  ? 'New incoming notifications will appear here automatically.'
+                  : 'Read notifications will show here after you open or mark them as read.'}
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -304,7 +364,8 @@ const NotificationCenter = () => {
                             e.stopPropagation();
                             markAsRead(notification._id);
                           }}
-                          className="p-1 text-blue-500 hover:bg-blue-500/10 rounded transition-colors"
+                          disabled={notification.isRead}
+                          className="p-1 text-blue-500 hover:bg-blue-500/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           title="Mark as read"
                         >
                           <Check size={14} />
@@ -318,7 +379,7 @@ const NotificationCenter = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Eye size={12} />
-                          Unread
+                          {notification.isRead ? 'Read' : 'Unread'}
                         </div>
                         <span className="px-2 py-0.5 border border-border rounded-full uppercase text-[10px] tracking-wide">
                           {notification.type}
