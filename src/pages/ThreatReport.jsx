@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -48,6 +48,22 @@ const ThreatReport = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setPosition({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    });
+                },
+                (err) => {
+                    console.error('Error getting location:', err);
+                }
+            );
+        }
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -327,8 +343,8 @@ const ThreatReport = () => {
                             
                             <div className="rounded-2xl overflow-hidden border border-border mb-4 flex-grow relative">
                                 <MapContainer
-                                    center={[7.8731, 80.7718]}
-                                    zoom={7}
+                                    center={position ? [position.lat, position.lng] : [7.8731, 80.7718]}
+                                    zoom={position ? 13 : 7}
                                     scrollWheelZoom={true}
                                     style={{ height: '400px', width: '100%' }}
                                 >
