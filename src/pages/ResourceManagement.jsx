@@ -40,7 +40,8 @@ function ResourceManagement() {
     type: RESOURCE_TYPES[0],
     description: '',
     serialNumber: '',
-    location: ''
+    location: '',
+    otherType: ''
   });
 
   const notify = useCallback((message, type = 'success') => {
@@ -84,17 +85,19 @@ function ResourceManagement() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ type: RESOURCE_TYPES[0], description: '', serialNumber: '', location: '' });
+    setForm({ type: RESOURCE_TYPES[0], description: '', serialNumber: '', location: '', otherType: '' });
     setShowModal(true);
   };
 
   const openEdit = (row) => {
     setEditing(row);
     setForm({
-      type: row.type || RESOURCE_TYPES[0],
+      // If the saved type is one of the known types, use it, otherwise treat it as OTHER
+      type: RESOURCE_TYPES.includes(row.type) ? row.type : 'OTHER',
       description: row.description || '',
       serialNumber: row.metadata?.serialNumber || '',
-      location: row.metadata?.location || ''
+      location: row.metadata?.location || '',
+      otherType: RESOURCE_TYPES.includes(row.type) ? '' : (row.type || '')
     });
     setShowModal(true);
   };
@@ -107,16 +110,17 @@ function ResourceManagement() {
     };
 
     try {
+      const finalType = form.type === 'OTHER' ? (form.otherType || form.type) : form.type;
       if (editing?._id) {
         await api.put(`/resources/${editing._id}`, {
-          type: form.type,
+          type: finalType,
           description: form.description,
           metadata
         });
         notify('Resource updated');
       } else {
         await api.post('/resources', {
-          type: form.type,
+          type: finalType,
           description: form.description,
           metadata
         });
@@ -281,6 +285,17 @@ function ResourceManagement() {
                 <select className="input-field" value={form.type} onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}>
                   {RESOURCE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
                 </select>
+                  {form.type === 'OTHER' && (
+                    <div className="mt-2">
+                      <input
+                        className="input-field"
+                        placeholder="Enter resource type"
+                        value={form.otherType}
+                        onChange={(e) => setForm((prev) => ({ ...prev, otherType: e.target.value }))}
+                        required
+                      />
+                    </div>
+                  )}
               </div>
 
               <div>
