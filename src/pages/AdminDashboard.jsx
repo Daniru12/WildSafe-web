@@ -376,7 +376,7 @@ const AdminDashboard = () => {
                                             <h4 className="font-semibold">7-Day Forecast</h4>
                                         </div>
                                         <p className="text-2xl font-bold mb-2">
-                                            {predictiveInsights.forecast?.next7Days || 0} incidents
+                                            {predictiveInsights.forecast?.next7DaysEstimate || 0} incidents
                                         </p>
                                         <p className="text-sm text-text-muted">
                                             Trend: {predictiveInsights.forecast?.trend || 'STABLE'}
@@ -392,13 +392,13 @@ const AdminDashboard = () => {
                                             <h4 className="font-semibold">Current Activity</h4>
                                         </div>
                                         <p className="text-2xl font-bold mb-2">
-                                            {predictiveInsights.currentStats?.totalIncidents || 0}
+                                            {predictiveInsights.stats?.totalIncidents || 0}
                                         </p>
                                         <p className="text-sm text-text-muted">
                                             Last 30 days
                                         </p>
                                         <p className="text-xs text-text-muted mt-2">
-                                            Daily avg: {predictiveInsights.currentStats?.dailyAverage || 0}
+                                            Daily avg: {predictiveInsights.stats?.dailyAverage || 0}
                                         </p>
                                     </div>
 
@@ -408,7 +408,7 @@ const AdminDashboard = () => {
                                             <h4 className="font-semibold">Top Category</h4>
                                         </div>
                                         <p className="text-lg font-bold mb-2 capitalize">
-                                            {Object.keys(predictiveInsights.currentStats?.categoryBreakdown || {})[0]?.replace('_', ' ') || 'N/A'}
+                                            {Object.keys(predictiveInsights.stats?.categoryBreakdown || {})[0]?.replace('_', ' ') || 'N/A'}
                                         </p>
                                         <p className="text-sm text-text-muted">
                                             Most frequent incident type
@@ -417,13 +417,13 @@ const AdminDashboard = () => {
                                 </div>
 
                                 {/* AI Insights */}
-                                {predictiveInsights.aiAnalysis && (
+                                {predictiveInsights.aiAnalysis ? (
                                     <div className="p-6 glass-morphism border border-primary/20">
                                         <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
                                             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                                                 🧠
                                             </div>
-                                            AI-Powered Insights
+                                            AI-Powered Predictive Insights
                                         </h3>
                                         <div className="bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-sm p-6 rounded-xl border border-white/10 shadow-lg">
                                             <div className="space-y-4">
@@ -432,11 +432,17 @@ const AdminDashboard = () => {
                                                         const aiData = JSON.parse(predictiveInsights.aiAnalysis);
                                                         return (
                                                             <>
+                                                                {aiData.overallAssessment && (
+                                                                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                                                                        <p className="text-sm font-medium text-primary mb-2">📊 Overall Assessment</p>
+                                                                        <p className="text-sm text-text-muted">{aiData.overallAssessment}</p>
+                                                                    </div>
+                                                                )}
                                                                 {aiData.forecast && (
                                                                     <div className="flex items-start gap-3">
                                                                         <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
                                                                         <div>
-                                                                            <p className="text-sm font-medium text-blue-300 mb-1">7-Day Forecast</p>
+                                                                            <p className="text-sm font-medium text-blue-300 mb-1">📈 7-Day Forecast</p>
                                                                             <p className="text-sm text-text-muted">{aiData.forecast}</p>
                                                                         </div>
                                                                     </div>
@@ -445,7 +451,7 @@ const AdminDashboard = () => {
                                                                     <div className="flex items-start gap-3">
                                                                         <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
                                                                         <div>
-                                                                            <p className="text-sm font-medium text-orange-300 mb-1">High-Risk Types</p>
+                                                                            <p className="text-sm font-medium text-orange-300 mb-1">⚠️ High-Risk Types</p>
                                                                             <div className="flex flex-wrap gap-2 mt-2">
                                                                                 {aiData.highRiskTypes.map((risk, index) => (
                                                                                     <span key={index} className="px-2 py-1 bg-orange-500/20 text-orange-300 rounded text-xs">
@@ -456,12 +462,45 @@ const AdminDashboard = () => {
                                                                         </div>
                                                                     </div>
                                                                 )}
+                                                                {aiData.highRiskAreas && aiData.highRiskAreas.length > 0 && (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-red-300 mb-1">📍 High-Risk Areas</p>
+                                                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                                                {aiData.highRiskAreas.map((area, index) => (
+                                                                                    <span key={index} className="px-2 py-1 bg-red-500/20 text-red-300 rounded text-xs">
+                                                                                        {area}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {aiData.timePatterns && (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-purple-300 mb-1">🕐 Time Patterns</p>
+                                                                            <p className="text-sm text-text-muted">{aiData.timePatterns}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                                 {aiData.precautions && (
                                                                     <div className="flex items-start gap-3">
                                                                         <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
                                                                         <div>
-                                                                            <p className="text-sm font-medium text-yellow-300 mb-1">Recommended Precautions</p>
+                                                                            <p className="text-sm font-medium text-yellow-300 mb-1">🛡️ Recommended Precautions</p>
                                                                             <p className="text-sm text-text-muted">{aiData.precautions}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {aiData.recommendations && (
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-green-300 mb-1">💡 Strategic Recommendations</p>
+                                                                            <p className="text-sm text-text-muted">{aiData.recommendations}</p>
                                                                         </div>
                                                                     </div>
                                                                 )}
@@ -469,7 +508,7 @@ const AdminDashboard = () => {
                                                                     <div className="flex items-center gap-3">
                                                                         <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                                                                         <div>
-                                                                            <p className="text-sm font-medium text-red-300 mb-1">Risk Level</p>
+                                                                            <p className="text-sm font-medium text-red-300 mb-1">🎯 Risk Level</p>
                                                                             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
                                                                                 aiData.riskLevel === 'LOW' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
                                                                                 aiData.riskLevel === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' :
@@ -500,19 +539,65 @@ const AdminDashboard = () => {
                                             <span>Powered by OpenAI GPT-3.5</span>
                                         </div>
                                     </div>
+                                ) : (
+                                    <div className="p-6 glass-morphism border border-white/10">
+                                        <div className="text-center py-8">
+                                            <div className="w-16 h-16 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <span className="text-3xl">🧠</span>
+                                            </div>
+                                            <h3 className="text-lg font-bold mb-2">AI Insights Not Available</h3>
+                                            <p className="text-sm text-text-muted max-w-md mx-auto">
+                                                AI-powered insights require at least 5 incidents in the last 30 days. 
+                                                Continue reporting incidents to unlock predictive analytics.
+                                            </p>
+                                        </div>
+                                    </div>
                                 )}
 
                                 {/* Category Breakdown */}
                                 <div className="p-6 glass-morphism">
                                     <h3 className="text-xl font-bold mb-4">Incident Categories (Last 30 Days)</h3>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        {Object.entries(predictiveInsights.currentStats?.categoryBreakdown || {}).map(([category, count]) => (
+                                        {Object.entries(predictiveInsights.stats?.categoryBreakdown || {}).map(([category, count]) => (
                                             <div key={category} className="flex justify-between items-center p-3 bg-surface/50 rounded">
                                                 <span className="capitalize">{category.replace('_', ' ')}</span>
                                                 <span className="font-bold">{count}</span>
                                             </div>
                                         ))}
                                     </div>
+                                </div>
+
+                                {/* Status Breakdown */}
+                                <div className="p-6 glass-morphism">
+                                    <h3 className="text-xl font-bold mb-4">Status Distribution (Last 30 Days)</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {Object.entries(predictiveInsights.stats?.statusBreakdown || {}).map(([status, count]) => (
+                                            <div key={status} className="flex justify-between items-center p-3 bg-surface/50 rounded">
+                                                <span className="capitalize">{status.replace('_', ' ')}</span>
+                                                <span className="font-bold">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Priority Breakdown */}
+                                {predictiveInsights.stats?.priorityBreakdown && Object.keys(predictiveInsights.stats.priorityBreakdown).length > 0 && (
+                                    <div className="p-6 glass-morphism">
+                                        <h3 className="text-xl font-bold mb-4">Priority Distribution (Last 30 Days)</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {Object.entries(predictiveInsights.stats.priorityBreakdown).map(([priority, count]) => (
+                                                <div key={priority} className="flex justify-between items-center p-3 bg-surface/50 rounded">
+                                                    <span className="capitalize">{priority.replace('_', ' ')}</span>
+                                                    <span className="font-bold">{count}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Last Updated */}
+                                <div className="text-center text-sm text-text-muted">
+                                    Last updated: {predictiveInsights.lastUpdated ? new Date(predictiveInsights.lastUpdated).toLocaleString() : 'N/A'}
                                 </div>
                             </>
                         ) : (
