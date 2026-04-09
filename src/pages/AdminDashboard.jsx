@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
-import { Filter, Search, CheckCircle, Clock, AlertTriangle, User, Trash2, TrendingUp, MapPin, Activity, Shield } from 'lucide-react';
+import { Filter, Search, CheckCircle, Clock, AlertTriangle, User, Trash2, TrendingUp, MapPin, Activity, Shield, BellRing } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import NotificationDropdown from '../components/NotificationDropdown';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -12,11 +14,35 @@ const AdminDashboard = () => {
     const [loadingThreats, setLoadingThreats] = useState(true);
     const [loadingPredictions, setLoadingPredictions] = useState(true);
     const [activeTab, setActiveTab] = useState('incidents');
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+    const [latestThreatNotification, setLatestThreatNotification] = useState(null);
     const [filters, setFilters] = useState({
         status: '',
         category: ''
     });
     const [predictiveInsights, setPredictiveInsights] = useState(null);
+
+    const fetchAdminNotifications = useCallback(async () => {
+        try {
+            const [statsRes, notificationsRes] = await Promise.all([
+                api.get('/notifications/stats'),
+                api.get('/notifications?isRead=false&limit=30')
+            ]);
+
+            const unread = statsRes.data?.unreadCount || 0;
+            const unreadNotifications = notificationsRes.data?.notifications || [];
+            const newestThreat = unreadNotifications.find((notification) => {
+                const isThreatMeta = notification?.metadata?.source === 'THREAT_REPORT';
+                const hasThreatTitle = String(notification?.title || '').toLowerCase().includes('threat report');
+                return isThreatMeta || hasThreatTitle;
+            }) || null;
+
+            setUnreadNotificationCount(unread);
+            setLatestThreatNotification(newestThreat);
+        } catch (err) {
+            console.error('Failed to fetch admin notifications', err);
+        }
+    }, []);
 
     const fetchIncidents = useCallback(async () => {
         try {
@@ -70,6 +96,20 @@ const AdminDashboard = () => {
         }
     }, [activeTab, fetchPredictiveInsights]);
 
+    useEffect(() => {
+        fetchAdminNotifications();
+
+        const interval = setInterval(fetchAdminNotifications, 30000);
+        const handleNotificationsUpdated = () => fetchAdminNotifications();
+
+        window.addEventListener('notifications:updated', handleNotificationsUpdated);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notifications:updated', handleNotificationsUpdated);
+        };
+    }, [fetchAdminNotifications]);
+
     const handleStatusChange = async (id, newStatus) => {
         try {
             await api.patch(`/incidents/${id}/status`, { status: newStatus });
@@ -120,14 +160,43 @@ const AdminDashboard = () => {
             <Navbar />
             <main className="max-w-6xl mx-auto px-6 mt-12 animate-fade-in">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-                    <p className="text-text-muted">Track and manage all environmental incidents reported by citizens.</p>
+                    <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
+                        <div>
+                            <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
+                            <p className="text-text-muted">Track and manage all environmental incidents reported by citizens.</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Link
+                                to="/notifications"
+                                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/15 hover:border-primary/60 text-sm text-text-muted hover:text-white transition-colors"
+                            >
+                                <BellRing size={16} />
+                                <span>Notifications</span>
+                                {unreadNotificationCount > 0 && (
+                                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
+                                        {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                                    </span>
+                                )}
+                            </Link>
+                            <NotificationDropdown />
+                        </div>
+                    </div>
                     {user && (
                         <div className="mt-2 p-2 bg-blue-500/10 rounded">
                             <small>Logged in as: {user.name} ({user.role})</small>
                         </div>
                     )}
                 </div>
+
+                {latestThreatNotification && (
+                    <div className="mb-6 rounded-lg border border-orange-400/40 bg-orange-500/10 px-4 py-3 text-sm">
+                        <span className="font-semibold text-orange-200">New threat report has arrived.</span>
+                        <span className="text-text-muted"> {latestThreatNotification.message}</span>
+                        <Link to="/notifications" className="ml-2 text-primary hover:underline">
+                            View notifications
+                        </Link>
+                    </div>
+                )}
 
                 <div className="mb-8">
                     <div className="flex gap-4 border-b border-white/10">

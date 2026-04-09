@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import NotificationCenter from './NotificationCenter';
 import { 
   Bell, 
   BellRing, 
   X, 
-  Check,
-  Eye
+    Check
 } from 'lucide-react';
 
 const NotificationDropdown = () => {
@@ -22,9 +20,21 @@ const NotificationDropdown = () => {
         
         // Set up polling for new notifications
         const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
+
+        const handleNotificationsUpdated = () => {
+            fetchUnreadCount();
+            if (isOpen) {
+                fetchNotifications();
+            }
+        };
+
+        window.addEventListener('notifications:updated', handleNotificationsUpdated);
         
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notifications:updated', handleNotificationsUpdated);
+        };
+    }, [isOpen]);
 
     const fetchUnreadCount = async () => {
         try {
@@ -36,11 +46,9 @@ const NotificationDropdown = () => {
     };
 
     const fetchNotifications = async () => {
-        if (isOpen) return; // Don't fetch if already open
-        
         try {
             setLoading(true);
-            const response = await api.get('/notifications?limit=5');
+            const response = await api.get('/notifications?limit=5&isRead=false');
             setNotifications(response.data.notifications || []);
         } catch (err) {
             console.error('Failed to fetch notifications:', err);
@@ -59,13 +67,20 @@ const NotificationDropdown = () => {
     const markAsRead = async (notificationId) => {
         try {
             await api.put(`/notifications/${notificationId}/read`);
-            setNotifications(notifications.map(notif => 
-                notif._id === notificationId ? { ...notif, isRead: true } : notif
-            ));
-            setUnreadCount(Math.max(0, unreadCount - 1));
+            setNotifications((prev) => prev.filter((notif) => notif._id !== notificationId));
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+            window.dispatchEvent(new Event('notifications:updated'));
         } catch (err) {
             console.error('Failed to mark notification as read:', err);
         }
+    };
+
+    const extractCaseId = (notification) => {
+        if (notification.caseId) return notification.caseId;
+        if (notification.metadata?.caseId) return notification.metadata.caseId;
+        if (notification.relatedIncident?._id) return notification.relatedIncident._id;
+        if (notification.relatedIncident) return notification.relatedIncident;
+        return null;
     };
 
     const handleNotificationClick = (notification) => {
@@ -76,16 +91,21 @@ const NotificationDropdown = () => {
         // Close dropdown and navigate
         setIsOpen(false);
         
-        if (notification.caseId) {
-            navigate(`/cases/${notification.caseId}`);
+        const caseId = extractCaseId(notification);
+        if (caseId) {
+            navigate(`/cases/${caseId}`);
+            return;
         }
+
+        navigate('/notifications');
     };
 
     const markAllAsRead = async () => {
         try {
             await api.put('/notifications/read-all');
-            setNotifications(notifications.map(notif => ({ ...notif, isRead: true })));
+            setNotifications([]);
             setUnreadCount(0);
+            window.dispatchEvent(new Event('notifications:updated'));
         } catch (err) {
             console.error('Failed to mark all as read:', err);
         }
@@ -240,7 +260,7 @@ const NotificationDropdown = () => {
                                     }}
                                     className="w-full text-center text-sm text-primary hover:underline"
                                 >
-                                    View all notifications
+                                    See all notifications
                                 </button>
                             </div>
                         )}
