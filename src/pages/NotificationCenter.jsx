@@ -21,6 +21,7 @@ const STATUS_UNREAD = 'UNREAD';
 const STATUS_READ = 'READ';
 
 const emergencyTypes = new Set(['NEW_INCIDENT', 'geo-alert', 'URGENT_ALERT']);
+const incidentStatusTypes = new Set(['INCIDENT_UPDATE', 'CASE_UPDATE']);
 
 const NotificationCenter = () => {
   const navigate = useNavigate();
@@ -70,11 +71,20 @@ const NotificationCenter = () => {
 
   const isThreatStatus = (notification) => {
     const source = notification?.metadata?.source;
-    if (source === 'THREAT_REPORT_STATUS' || source === 'THREAT_REPORT') return true;
+    if (source === 'THREAT_REPORT_STATUS' || source === 'THREAT_REPORT' || source === 'INCIDENT_STATUS') return true;
+
+    if (incidentStatusTypes.has(notification?.type)) return true;
 
     const title = String(notification?.title || '').toLowerCase();
     const message = String(notification?.message || '').toLowerCase();
-    return title.includes('threat') || message.includes('threat report');
+    return (
+      title.includes('threat') ||
+      message.includes('threat report') ||
+      title.includes('incident status') ||
+      message.includes('incident status') ||
+      title.includes('case status') ||
+      message.includes('case status')
+    );
   };
 
   const extractCaseId = (notification) => {
