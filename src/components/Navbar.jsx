@@ -6,8 +6,6 @@ import NotificationDropdown from './NotificationDropdown';
 
 import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Package, AlertTriangle, Sparkles, ChevronDown } from 'lucide-react';
 
-dev
-
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
