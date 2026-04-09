@@ -49,7 +49,7 @@ const CitizenDashboard = () => {
     return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <main className="max-w-6xl mx-auto px-6 mt-12 animate-fade-in">
+            <main className="max-w-6xl mx-auto px-6 mt-28 animate-fade-in">
                 <div className="flex justify-between items-center mb-10">
                     <div>
                         <h1 className="text-4xl font-bold mb-2">My Reports</h1>
