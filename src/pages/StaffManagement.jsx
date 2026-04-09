@@ -21,6 +21,8 @@ function StaffManagement() {
     department: DEPARTMENTS[0],
     permissions: []
   });
+  const [users, setUsers] = useState([]);
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const notify = useCallback((message, type = 'success') => {
     setToast({ message, type });
@@ -56,8 +58,18 @@ function StaffManagement() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ userId: '', department: DEPARTMENTS[0], permissions: [] });
+    setForm({ userId: '', department: DEPARTMENTS[0], permissions: [], name: '', email: '', password: '', phone: '' });
     setShowModal(true);
+    // load users for selection
+    (async () => {
+      try {
+        const res = await api.get('/auth/users');
+        setUsers(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        // ignore - fallback to manual entry
+        setUsers([]);
+      }
+    })();
   };
 
   const openEdit = (row) => {
@@ -147,14 +159,61 @@ function StaffManagement() {
             <form className="space-y-5" onSubmit={saveStaff}>
               {!editing && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">User ID</label>
-                  <input
-                    value={form.userId}
-                    onChange={(e) => setForm((prev) => ({ ...prev, userId: e.target.value }))}
+                  <label className="mb-1 block text-sm font-medium text-text-muted">Select User</label>
+                  <select
+                    value={creatingUser ? 'NEW' : form.userId}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'NEW') {
+                        setCreatingUser(true);
+                        setForm((prev) => ({ ...prev, userId: '' }));
+                      } else {
+                        setCreatingUser(false);
+                        setForm((prev) => ({ ...prev, userId: val }));
+                      }
+                    }}
                     className="input-field"
-                    placeholder="Paste MongoDB ObjectId"
-                    required
-                  />
+                    required={!creatingUser}
+                  >
+                    <option value="">-- Select existing user --</option>
+                    {users.map((u) => (
+                      <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                    ))}
+                    <option value="NEW">+ Create new user...</option>
+                  </select>
+
+                  {creatingUser && (
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input
+                        placeholder="Full name"
+                        value={form.name}
+                        onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                        className="input-field"
+                        required
+                      />
+                      <input
+                        placeholder="Email"
+                        value={form.email}
+                        onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                        className="input-field"
+                        required
+                      />
+                      <input
+                        placeholder="Password"
+                        value={form.password}
+                        onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                        className="input-field"
+                        required
+                        type="password"
+                      />
+                      <input
+                        placeholder="Phone (optional)"
+                        value={form.phone}
+                        onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                        className="input-field"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
