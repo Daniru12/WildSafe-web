@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { 
@@ -24,18 +24,12 @@ const NotificationCenter = () => {
     const [filter, setFilter] = useState('all'); // all, unread, read
     const [stats, setStats] = useState({});
 
-    useEffect(() => {
-        fetchNotifications();
-        fetchUnreadCount();
-        fetchStats();
-    }, [filter]);
-
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const params = new URLSearchParams();
             if (filter === 'unread') params.append('unreadOnly', 'true');
-            
+
             const response = await api.get(`/notifications?${params.toString()}`);
             setNotifications(response.data.notifications || []);
         } catch (err) {
@@ -43,25 +37,31 @@ const NotificationCenter = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
-    const fetchUnreadCount = async () => {
+    const fetchUnreadCount = useCallback(async () => {
         try {
             const response = await api.get('/notifications/unread-count');
             setUnreadCount(response.data.unreadCount || 0);
         } catch (err) {
             console.error('Failed to fetch unread count:', err);
         }
-    };
+    }, []);
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const response = await api.get('/notifications/stats');
             setStats(response.data);
         } catch (err) {
             console.error('Failed to fetch stats:', err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+        fetchUnreadCount();
+        fetchStats();
+    }, [fetchNotifications, fetchUnreadCount, fetchStats]);
 
     const markAsRead = async (notificationId) => {
         try {
@@ -71,7 +71,7 @@ const NotificationCenter = () => {
             ));
             fetchUnreadCount();
             fetchStats();
-        } catch (err) {
+        } catch {
             setError('Failed to mark notification as read');
         }
     };
@@ -82,7 +82,7 @@ const NotificationCenter = () => {
             setNotifications(notifications.map(notif => ({ ...notif, read: true })));
             setUnreadCount(0);
             fetchStats();
-        } catch (err) {
+        } catch {
             setError('Failed to mark all notifications as read');
         }
     };
@@ -93,7 +93,7 @@ const NotificationCenter = () => {
             setNotifications(notifications.filter(notif => notif._id !== notificationId));
             fetchUnreadCount();
             fetchStats();
-        } catch (err) {
+        } catch {
             setError('Failed to delete notification');
         }
     };
@@ -285,6 +285,15 @@ const NotificationCenter = () => {
                             {notifications.map((notification) => (
                                 <div
                                     key={notification._id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => handleNotificationClick(notification)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleNotificationClick(notification);
+                                        }
+                                    }}
                                     className={`p-6 hover:bg-surface-light transition-colors cursor-pointer ${
                                         !notification.read ? 'bg-blue-500/5' : ''
                                     }`}

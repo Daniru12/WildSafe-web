@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Activity, Bot, CheckCircle2, Loader2, Package, Search, Sparkles, UserCog, Zap } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import aiService from '../services/aiService';
 
 function AiInsights() {
+  const navPt = useFixedNavOffsetClass();
   const [tab, setTab] = useState('semantic');
 
   const [semanticQuery, setSemanticQuery] = useState('');
@@ -20,20 +22,20 @@ function AiInsights() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuggestion, setActionSuggestion] = useState('');
 
-  const loadResources = async () => {
+  const loadResources = useCallback(async () => {
     try {
       const { data } = await api.get('/resources');
       setResources(Array.isArray(data) ? data.filter((r) => r.status !== 'ARCHIVED') : []);
     } catch {
       setResources([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (tab === 'assignment' && resources.length === 0) {
       loadResources();
     }
-  }, [tab]);
+  }, [tab, resources.length, loadResources]);
 
   const runSemanticSearch = async (event) => {
     event.preventDefault();
@@ -76,7 +78,7 @@ function AiInsights() {
     <div className="min-h-screen pb-16">
       <Navbar />
 
-      <main className="mx-auto mt-12 max-w-7xl px-6">
+      <main className={`mx-auto max-w-7xl px-6 ${navPt || 'mt-12'}`}>
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center">
           <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-4">
             <Bot size={42} className="text-purple-300" />

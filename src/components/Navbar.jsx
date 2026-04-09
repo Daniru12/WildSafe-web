@@ -3,8 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from './NotificationDropdown';
 
+
 import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Package, AlertTriangle, Sparkles, ChevronDown } from 'lucide-react';
 
+dev
 
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
@@ -35,6 +37,8 @@ const Navbar = () => {
     ];
 
     const isActive = (path) => location.pathname === path;
+    const isGroqAiSteps =
+        location.pathname === '/ranger-ai-steps' || location.pathname.startsWith('/ranger-ai-steps/');
 
     return (
         <nav className={`
@@ -127,9 +131,25 @@ const Navbar = () => {
                                 )}
 
                                 {user?.role === 'OFFICER' && (
-                                    <div className="flex items-center gap-4">
-                                        <NotificationDropdown />
-                                    </div>
+                                    <>
+                                        <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
+                                            <Navigation2 size={18} />
+                                            <span>Ranger Missions</span>
+                                        </Link>
+                                        <Link
+                                            to="/ranger-ai-steps"
+                                            className={`
+                                                flex items-center gap-2 text-sm font-bold transition-all
+                                                ${isGroqAiSteps ? 'text-primary' : 'text-text-muted hover:text-white'}
+                                            `}
+                                        >
+                                            <Sparkles size={18} />
+                                            <span>Groq AI steps</span>
+                                        </Link>
+                                        <div className="flex items-center gap-4">
+                                            <NotificationDropdown />
+                                        </div>
+                                    </>
                                 )}
 
                                 {/* User Dropdown / Profile */}
@@ -211,6 +231,26 @@ const Navbar = () => {
                                     <LayoutDashboard size={20} />
                                     Dashboard
                                 </Link>
+                                {user?.role === 'OFFICER' && (
+                                    <Link 
+                                        to="/ranger-missions" 
+                                        onClick={() => setIsOpen(false)}
+                                        className="flex items-center gap-3 text-white font-bold"
+                                    >
+                                        <Navigation2 size={20} />
+                                        Ranger Missions
+                                    </Link>
+                                )}
+                                {user?.role === 'OFFICER' && (
+                                    <Link 
+                                        to="/ranger-ai-steps" 
+                                        onClick={() => setIsOpen(false)}
+                                        className={`flex items-center gap-3 font-bold ${isGroqAiSteps ? 'text-primary' : 'text-white'}`}
+                                    >
+                                        <Sparkles size={20} />
+                                        Groq AI steps
+                                    </Link>
+                                )}
                                 <Link 
                                     to="/profile" 
                                     onClick={() => setIsOpen(false)}

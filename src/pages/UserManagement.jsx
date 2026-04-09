@@ -25,7 +25,7 @@ const UserManagement = () => {
             const res = await api.get('/auth/users');
             setUsers(res.data);
             setError(null);
-        } catch (err) {
+        } catch {
             setError('Failed to load users. Please try again.');
             showToast('Failed to load users', 'error');
         } finally {
@@ -38,13 +38,14 @@ const UserManagement = () => {
             await api.put(`/auth/users/${userId}/role`, { role: newRole });
             showToast(`User role updated to ${newRole}`);
             fetchUsers();
-        } catch (err) {
+        } catch {
             showToast('Failed to update user role', 'error');
         }
     };
 
     useEffect(() => {
         fetchUsers();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const filteredUsers = users.filter(user => {
