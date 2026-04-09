@@ -196,7 +196,7 @@ function App() {
           <Route
             path="/notifications"
             element={
-              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+              <ProtectedRoute roles={['CITIZEN', 'OFFICER', 'ADMIN']}>
                 <RoleBasedLayout>
                   <NotificationCenter />
                 </RoleBasedLayout>

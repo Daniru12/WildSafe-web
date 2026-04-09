@@ -16,12 +16,11 @@ import {
 
 const TAB_ALL = 'ALL';
 const TAB_EMERGENCY = 'EMERGENCY';
-const TAB_ASSIGNED = 'ASSIGNED';
+const TAB_THREAT_STATUS = 'THREAT_STATUS';
 const STATUS_UNREAD = 'UNREAD';
 const STATUS_READ = 'READ';
 
 const emergencyTypes = new Set(['NEW_INCIDENT', 'geo-alert', 'URGENT_ALERT']);
-const assignedTypes = new Set(['ASSIGNMENT', 'CASE_ASSIGNED']);
 
 const NotificationCenter = () => {
   const navigate = useNavigate();
@@ -32,12 +31,15 @@ const NotificationCenter = () => {
   const [activeTab, setActiveTab] = useState(TAB_ALL);
   const [statusTab, setStatusTab] = useState(STATUS_UNREAD);
 
-  const fetchUnreadNotifications = useCallback(async () => {
+  const isReadNotification = (notification) =>
+    notification?.isRead === true || notification?.isRead === 'true';
+
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
-      params.append('limit', '200');
+      params.append('limit', '500');
 
       const response = await api.get(`/notifications?${params.toString()}`);
       setNotifications(response.data.notifications || []);
@@ -49,24 +51,31 @@ const NotificationCenter = () => {
   }, []);
 
   useEffect(() => {
-    fetchUnreadNotifications();
+    fetchNotifications();
 
     const handleNotificationsUpdated = () => {
-      fetchUnreadNotifications();
+      fetchNotifications();
     };
 
     window.addEventListener('notifications:updated', handleNotificationsUpdated);
     return () => {
       window.removeEventListener('notifications:updated', handleNotificationsUpdated);
     };
-  }, [fetchUnreadNotifications]);
+  }, [fetchNotifications]);
 
   const isEmergency = (notification) => {
     if (emergencyTypes.has(notification.type)) return true;
     return notification.priority === 'URGENT';
   };
 
-  const isAssigned = (notification) => assignedTypes.has(notification.type);
+  const isThreatStatus = (notification) => {
+    const source = notification?.metadata?.source;
+    if (source === 'THREAT_REPORT_STATUS' || source === 'THREAT_REPORT') return true;
+
+    const title = String(notification?.title || '').toLowerCase();
+    const message = String(notification?.message || '').toLowerCase();
+    return title.includes('threat') || message.includes('threat report');
+  };
 
   const extractCaseId = (notification) => {
     if (notification.caseId) return notification.caseId;
@@ -78,35 +87,35 @@ const NotificationCenter = () => {
 
   const filteredNotifications = useMemo(() => {
     const statusFiltered = notifications.filter((notification) =>
-      statusTab === STATUS_UNREAD ? !notification.isRead : notification.isRead
+      statusTab === STATUS_UNREAD ? !isReadNotification(notification) : isReadNotification(notification)
     );
 
     if (activeTab === TAB_EMERGENCY) {
       return statusFiltered.filter(isEmergency);
     }
-    if (activeTab === TAB_ASSIGNED) {
-      return statusFiltered.filter(isAssigned);
+    if (activeTab === TAB_THREAT_STATUS) {
+      return statusFiltered.filter(isThreatStatus);
     }
     return statusFiltered;
   }, [activeTab, notifications, statusTab]);
 
   const emergencyCount = useMemo(
-    () => notifications.filter((n) => !n.isRead && isEmergency(n)).length,
+    () => notifications.filter((n) => !isReadNotification(n) && isEmergency(n)).length,
     [notifications]
   );
 
-  const assignedCount = useMemo(
-    () => notifications.filter((n) => !n.isRead && isAssigned(n)).length,
+  const threatStatusCount = useMemo(
+    () => notifications.filter((n) => !isReadNotification(n) && isThreatStatus(n)).length,
     [notifications]
   );
 
   const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.isRead).length,
+    () => notifications.filter((n) => !isReadNotification(n)).length,
     [notifications]
   );
 
   const readCount = useMemo(
-    () => notifications.filter((n) => n.isRead).length,
+    () => notifications.filter((n) => isReadNotification(n)).length,
     [notifications]
   );
 
@@ -127,7 +136,7 @@ const NotificationCenter = () => {
   const markAllAsRead = async () => {
     try {
       await api.put('/notifications/read-all');
-      setNotifications([]);
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
       window.dispatchEvent(new Event('notifications:updated'));
     } catch {
       setError('Failed to mark all notifications as read');
@@ -135,7 +144,7 @@ const NotificationCenter = () => {
   };
 
   const handleNotificationClick = async (notification) => {
-    if (!notification.isRead) {
+    if (!isReadNotification(notification)) {
       await markAsRead(notification._id);
     }
 
@@ -149,7 +158,7 @@ const NotificationCenter = () => {
     if (isEmergency(notification)) {
       return <AlertTriangle size={16} className="text-red-500" />;
     }
-    if (isAssigned(notification)) {
+    if (isThreatStatus(notification)) {
       return <BellRing size={16} className="text-blue-500" />;
     }
     return <Bell size={16} className="text-gray-500" />;
@@ -215,7 +224,7 @@ const NotificationCenter = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="p-6 glass-morphism">
             <div className="flex items-center justify-between">
               <div>
@@ -249,8 +258,8 @@ const NotificationCenter = () => {
           <div className="p-6 glass-morphism">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-text-muted">Assigned Cases</p>
-                <p className="text-2xl font-bold text-blue-600">{assignedCount}</p>
+                <p className="text-sm text-text-muted">Threat Status</p>
+                <p className="text-2xl font-bold text-blue-600">{threatStatusCount}</p>
               </div>
               <BellRing size={24} className="text-blue-500" />
             </div>
@@ -286,7 +295,19 @@ const NotificationCenter = () => {
             </button>
           </div>
 
-          <h3 className="text-lg font-semibold mb-3">Type Tabs</h3>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="text-lg font-semibold">Type Tabs</h3>
+            <button
+              onClick={() => {
+                setStatusTab(STATUS_UNREAD);
+                setActiveTab(TAB_ALL);
+              }}
+              className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-surface-light transition-colors"
+            >
+              Clear filters
+            </button>
+          </div>
+
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setActiveTab(TAB_ALL)}
@@ -306,17 +327,17 @@ const NotificationCenter = () => {
                   : 'border border-border hover:bg-surface-light'
               }`}
             >
-              Emergency Alerts
+              Alerts
             </button>
             <button
-              onClick={() => setActiveTab(TAB_ASSIGNED)}
+              onClick={() => setActiveTab(TAB_THREAT_STATUS)}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === TAB_ASSIGNED
+                activeTab === TAB_THREAT_STATUS
                   ? 'bg-primary text-white'
                   : 'border border-border hover:bg-surface-light'
               }`}
             >
-              Assigned Case Notifications
+              Threat Status
             </button>
           </div>
         </div>
@@ -364,7 +385,7 @@ const NotificationCenter = () => {
                             e.stopPropagation();
                             markAsRead(notification._id);
                           }}
-                          disabled={notification.isRead}
+                          disabled={isReadNotification(notification)}
                           className="p-1 text-blue-500 hover:bg-blue-500/10 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           title="Mark as read"
                         >
@@ -379,7 +400,7 @@ const NotificationCenter = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Eye size={12} />
-                          {notification.isRead ? 'Read' : 'Unread'}
+                          {isReadNotification(notification) ? 'Read' : 'Unread'}
                         </div>
                         <span className="px-2 py-0.5 border border-border rounded-full uppercase text-[10px] tracking-wide">
                           {notification.type}

@@ -128,22 +128,26 @@ const Navbar = () => {
                                     </div>
                                 )}
 
-                                {user?.role === 'OFFICER' && (
+                                {['OFFICER', 'CITIZEN'].includes(user?.role) && (
                                     <>
-                                        <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
-                                            <Navigation2 size={18} />
-                                            <span>Ranger Missions</span>
-                                        </Link>
-                                        <Link
-                                            to="/ranger-ai-steps"
-                                            className={`
-                                                flex items-center gap-2 text-sm font-bold transition-all
-                                                ${isGroqAiSteps ? 'text-primary' : 'text-text-muted hover:text-white'}
-                                            `}
-                                        >
-                                            <Sparkles size={18} />
-                                            <span>Groq AI steps</span>
-                                        </Link>
+                                        {user?.role === 'OFFICER' && (
+                                            <>
+                                                <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
+                                                    <Navigation2 size={18} />
+                                                    <span>Ranger Missions</span>
+                                                </Link>
+                                                <Link
+                                                    to="/ranger-ai-steps"
+                                                    className={`
+                                                        flex items-center gap-2 text-sm font-bold transition-all
+                                                        ${isGroqAiSteps ? 'text-primary' : 'text-text-muted hover:text-white'}
+                                                    `}
+                                                >
+                                                    <Sparkles size={18} />
+                                                    <span>Groq AI steps</span>
+                                                </Link>
+                                            </>
+                                        )}
                                         <div className="flex items-center gap-4">
                                             <NotificationDropdown />
                                         </div>
@@ -192,7 +196,7 @@ const Navbar = () => {
 
                     {/* Mobile Toggle */}
                     <div className="md:hidden flex items-center gap-4">
-                        {isAuthenticated && user?.role === 'OFFICER' && <NotificationDropdown />}
+                        {isAuthenticated && ['OFFICER', 'CITIZEN'].includes(user?.role) && <NotificationDropdown />}
                         <button 
                             onClick={toggleMenu}
                             className="p-2 text-white hover:text-primary transition-colors"

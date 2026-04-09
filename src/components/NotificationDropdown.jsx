@@ -251,19 +251,17 @@ const NotificationDropdown = () => {
                         </div>
 
                         {/* Footer */}
-                        {notifications.length > 0 && (
-                            <div className="p-3 border-t border-border">
-                                <button
-                                    onClick={() => {
-                                        setIsOpen(false);
-                                        navigate('/notifications');
-                                    }}
-                                    className="w-full text-center text-sm text-primary hover:underline"
-                                >
-                                    See all notifications
-                                </button>
-                            </div>
-                        )}
+                        <div className="p-3 border-t border-border bg-surface-light/40">
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    navigate('/notifications');
+                                }}
+                                className="w-full rounded-md border border-primary/40 px-3 py-2 text-center text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                            >
+                                See all notifications
+                            </button>
+                        </div>
                     </div>
                 </>
             )}
