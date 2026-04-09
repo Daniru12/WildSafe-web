@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { 
   Plus, 
@@ -34,13 +33,8 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
     const [evidenceFiles, setEvidenceFiles] = useState([]);
     const [evidenceDescription, setEvidenceDescription] = useState('');
 
-    useEffect(() => {
-        if (caseId) {
-            fetchInvestigation();
-        }
-    }, [caseId]);
-
-    const fetchInvestigation = async () => {
+    const fetchInvestigation = useCallback(async () => {
+        if (!caseId) return;
         try {
             const response = await api.get(`/cases/${caseId}`);
             setInvestigation(response.data.investigation || {
@@ -51,7 +45,11 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
         } catch (err) {
             console.error('Error fetching investigation:', err);
         }
-    };
+    }, [caseId]);
+
+    useEffect(() => {
+        fetchInvestigation();
+    }, [fetchInvestigation]);
 
     const handleAddFinding = async () => {
         if (!newFinding.trim()) {

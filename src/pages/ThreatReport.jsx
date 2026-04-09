@@ -78,7 +78,7 @@ const ThreatReport = () => {
                 }))
             };
 
-            const response = await api.post('/threat-reports', reportData);
+            await api.post('/threat-reports', reportData);
             
             setSuccess(true);
             setTimeout(() => {

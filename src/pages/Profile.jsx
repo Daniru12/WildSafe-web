@@ -2,10 +2,12 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import { User, Mail, Shield, Wallet, BarChart3, Settings, TrendingUp, History, Zap } from 'lucide-react';
 
 const Profile = () => {
     const { user } = useAuth();
+    const navPt = useFixedNavOffsetClass();
 
     if (!user) return null;
 
@@ -13,7 +15,7 @@ const Profile = () => {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-6 pt-12 pb-24 animate-slide-up">
+            <main className={`max-w-7xl mx-auto px-6 pb-24 animate-slide-up ${navPt || 'pt-12'}`}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                     {/* Left Column - User Info */}

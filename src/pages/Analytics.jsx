@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { Download, BarChart2, PieChart as PieChartIcon, TrendingUp, MapPin, Clock, Users, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -7,8 +8,7 @@ import { Download, BarChart2, PieChart as PieChartIcon, TrendingUp, MapPin, Cloc
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const Analytics = () => {
-    const [categoryData, setCategoryData] = useState([]);
-    const [statusData, setStatusData] = useState([]);
+    const navPt = useFixedNavOffsetClass();
     const [trendData, setTrendData] = useState([]);
     const [threatStats, setThreatStats] = useState({});
     const [caseStats, setCaseStats] = useState({});
@@ -17,11 +17,7 @@ const Analytics = () => {
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('30'); // days
 
-    useEffect(() => {
-        fetchAnalyticsData();
-    }, [timeRange]);
-
-    const fetchAnalyticsData = async () => {
+    const fetchAnalyticsData = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -42,15 +38,7 @@ const Analytics = () => {
                 resolutionTime: caseResponse.data.resolutionTime || null
             });
 
-            // Fetch legacy analytics for backward compatibility
-            const [catRes, statusRes, trendRes] = await Promise.all([
-                api.get('/analytics/incidents-by-category'),
-                api.get('/analytics/incidents-by-status'),
-                api.get('/analytics/trends')
-            ]);
-
-            setCategoryData(catRes.data);
-            setStatusData(statusRes.data);
+            const trendRes = await api.get('/analytics/trends');
 
             // Format trend data for chart
             const formattedTrends = trendRes.data.map(item => ({
@@ -85,7 +73,11 @@ const Analytics = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [timeRange]);
+
+    useEffect(() => {
+        fetchAnalyticsData();
+    }, [fetchAnalyticsData]);
 
     const formatThreatType = (type) => {
         return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
@@ -98,7 +90,7 @@ const Analytics = () => {
     if (loading) return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 mt-12">
+            <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
@@ -109,7 +101,7 @@ const Analytics = () => {
     return (
         <div className="min-h-screen pb-16 print:bg-white print:text-black">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 mt-12 animate-fade-in">
+            <main className={`max-w-7xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 <div className="flex justify-between items-center mb-10 print:hidden">
                     <div>
                         <h1 className="text-4xl font-bold mb-2">Wildlife Threat Analytics</h1>

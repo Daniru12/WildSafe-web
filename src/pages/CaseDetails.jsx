@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import InvestigationManagement from '../components/InvestigationManagement';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { 
   ArrowLeft, 
@@ -25,6 +26,7 @@ import {
 const CaseDetails = () => {
     const { caseId } = useParams();
     const navigate = useNavigate();
+    const navPt = useFixedNavOffsetClass();
     const [case_, setCase] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -32,11 +34,7 @@ const CaseDetails = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({});
 
-    useEffect(() => {
-        fetchCaseDetails();
-    }, [caseId]);
-
-    const fetchCaseDetails = async () => {
+    const fetchCaseDetails = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/cases/${caseId}`);
@@ -47,7 +45,11 @@ const CaseDetails = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [caseId]);
+
+    useEffect(() => {
+        fetchCaseDetails();
+    }, [fetchCaseDetails]);
 
     const handleSaveEdit = async () => {
         try {
@@ -56,29 +58,6 @@ const CaseDetails = () => {
             setIsEditing(false);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to update case');
-        }
-    };
-
-    const handleAddInvestigationNote = async (note) => {
-        try {
-            await api.put(`/cases/${caseId}/investigation`, {
-                findings: {
-                    type: 'NOTE',
-                    description: note
-                }
-            });
-            fetchCaseDetails();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to add investigation note');
-        }
-    };
-
-    const handleResolveCase = async (resolutionData) => {
-        try {
-            await api.put(`/cases/${caseId}/resolve`, resolutionData);
-            fetchCaseDetails();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to resolve case');
         }
     };
 
@@ -111,7 +90,7 @@ const CaseDetails = () => {
         return (
             <div className="min-h-screen pb-16">
                 <Navbar />
-                <main className="max-w-7xl mx-auto px-6 mt-12">
+                <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                     <div className="flex items-center justify-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     </div>
@@ -124,7 +103,7 @@ const CaseDetails = () => {
         return (
             <div className="min-h-screen pb-16">
                 <Navbar />
-                <main className="max-w-7xl mx-auto px-6 mt-12">
+                <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                     <div className="bg-red-500/10 border border-danger text-danger p-6 rounded-lg">
                         {error}
                     </div>
@@ -137,7 +116,7 @@ const CaseDetails = () => {
         return (
             <div className="min-h-screen pb-16">
                 <Navbar />
-                <main className="max-w-7xl mx-auto px-6 mt-12">
+                <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                     <div className="text-center text-text-muted">Case not found</div>
                 </main>
             </div>
@@ -147,7 +126,7 @@ const CaseDetails = () => {
     return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 mt-12 animate-fade-in">
+            <main className={`max-w-7xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 {/* Header */}
                 <div className="mb-8">
                     <button

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { 
   Bell, 
@@ -17,6 +19,7 @@ import {
 
 const NotificationCenter = () => {
     const navigate = useNavigate();
+    const navPt = useFixedNavOffsetClass();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -24,18 +27,12 @@ const NotificationCenter = () => {
     const [filter, setFilter] = useState('all'); // all, unread, read
     const [stats, setStats] = useState({});
 
-    useEffect(() => {
-        fetchNotifications();
-        fetchUnreadCount();
-        fetchStats();
-    }, [filter]);
-
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const params = new URLSearchParams();
             if (filter === 'unread') params.append('unreadOnly', 'true');
-            
+
             const response = await api.get(`/notifications?${params.toString()}`);
             setNotifications(response.data.notifications || []);
         } catch (err) {
@@ -43,25 +40,31 @@ const NotificationCenter = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
-    const fetchUnreadCount = async () => {
+    const fetchUnreadCount = useCallback(async () => {
         try {
             const response = await api.get('/notifications/unread-count');
             setUnreadCount(response.data.unreadCount || 0);
         } catch (err) {
             console.error('Failed to fetch unread count:', err);
         }
-    };
+    }, []);
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const response = await api.get('/notifications/stats');
             setStats(response.data);
         } catch (err) {
             console.error('Failed to fetch stats:', err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+        fetchUnreadCount();
+        fetchStats();
+    }, [fetchNotifications, fetchUnreadCount, fetchStats]);
 
     const markAsRead = async (notificationId) => {
         try {
@@ -71,7 +74,7 @@ const NotificationCenter = () => {
             ));
             fetchUnreadCount();
             fetchStats();
-        } catch (err) {
+        } catch {
             setError('Failed to mark notification as read');
         }
     };
@@ -82,7 +85,7 @@ const NotificationCenter = () => {
             setNotifications(notifications.map(notif => ({ ...notif, read: true })));
             setUnreadCount(0);
             fetchStats();
-        } catch (err) {
+        } catch {
             setError('Failed to mark all notifications as read');
         }
     };
@@ -93,7 +96,7 @@ const NotificationCenter = () => {
             setNotifications(notifications.filter(notif => notif._id !== notificationId));
             fetchUnreadCount();
             fetchStats();
-        } catch (err) {
+        } catch {
             setError('Failed to delete notification');
         }
     };
@@ -137,8 +140,11 @@ const NotificationCenter = () => {
     if (loading) {
         return (
             <div className="min-h-screen pb-16">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <Navbar />
+                <div className={`max-w-4xl mx-auto px-6 ${navPt || 'mt-12'}`}>
+                    <div className="flex items-center justify-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
                 </div>
             </div>
         );
@@ -146,7 +152,8 @@ const NotificationCenter = () => {
 
     return (
         <div className="min-h-screen pb-16">
-            <div className="max-w-4xl mx-auto px-6 mt-12 animate-fade-in">
+            <Navbar />
+            <div className={`max-w-4xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-3">
