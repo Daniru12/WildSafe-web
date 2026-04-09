@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,20 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const ROLE_OPTIONS = ['CITIZEN', 'OFFICER', 'ADMIN'];
+const ALERT_TYPE_OPTIONS = ['fire', 'poaching', 'illegal-logging', 'weather', 'general'];
+
+const dedupeAwarenessItems = (items = []) => {
+    const seen = new Set();
+    return items.filter((item) => {
+        const id = item?._id || item?.id;
+        const contentKey = `${(item?.title || '').trim().toLowerCase()}|${(item?.content || '').trim().toLowerCase()}`;
+        const key = id || contentKey;
+
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+};
 
 const defaultMarkerIcon = L.icon({
     iconUrl: markerIcon,
@@ -35,6 +49,7 @@ const EmergencyAlerts = () => {
     const [formData, setFormData] = useState({
         title: '',
         message: '',
+        alertType: 'fire',
         targetRoles: ['CITIZEN', 'OFFICER'],
         expiresAt: ''
     });
@@ -45,12 +60,15 @@ const EmergencyAlerts = () => {
     const [alerts, setAlerts] = useState([]);
     const [stats, setStats] = useState(null);
     const [loadingAlerts, setLoadingAlerts] = useState(true);
+    const [relevantAwareness, setRelevantAwareness] = useState([]);
+    const [loadingAwareness, setLoadingAwareness] = useState(false);
+    const [selectedAwarenessIds, setSelectedAwarenessIds] = useState([]);
 
     const sortByNewest = (items) => {
         return [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     };
 
-    const fetchAlerts = async () => {
+    const fetchAlerts = useCallback(async () => {
         try {
             setLoadingAlerts(true);
             const endpoint = user?.role === 'ADMIN' ? '/alerts/all?limit=20&page=1' : '/alerts?limit=20&page=1';
@@ -61,22 +79,42 @@ const EmergencyAlerts = () => {
         } finally {
             setLoadingAlerts(false);
         }
-    };
+    }, [user?.role]);
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         try {
             const res = await api.get('/alerts/stats');
             setStats(res.data || null);
         } catch (err) {
             console.error('Failed to fetch alert stats', err);
         }
-    };
+    }, []);
+
+    const fetchRelevantAwareness = useCallback(async (alertType) => {
+        try {
+            setLoadingAwareness(true);
+            const res = await api.get(`/awareness/relevant/${alertType}`);
+            const items = dedupeAwarenessItems(res.data?.awareness || []);
+            setRelevantAwareness(items);
+            setSelectedAwarenessIds(items.map((item) => item._id || item.id));
+        } catch (err) {
+            console.error('Failed to fetch relevant awareness guidelines', err);
+            setRelevantAwareness([]);
+            setSelectedAwarenessIds([]);
+        } finally {
+            setLoadingAwareness(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (!user?.role) return;
         fetchAlerts();
         fetchStats();
-    }, [user?.role]);
+    }, [user?.role, fetchAlerts, fetchStats]);
+
+    useEffect(() => {
+        fetchRelevantAwareness(formData.alertType);
+    }, [formData.alertType, fetchRelevantAwareness]);
 
     const toggleTargetRole = (role) => {
         const hasRole = formData.targetRoles.includes(role);
@@ -91,6 +129,15 @@ const EmergencyAlerts = () => {
                 targetRoles: [...formData.targetRoles, role]
             });
         }
+    };
+
+    const toggleAwarenessSelection = (awarenessId) => {
+        setSelectedAwarenessIds((prev) => {
+            if (prev.includes(awarenessId)) {
+                return prev.filter((id) => id !== awarenessId);
+            }
+            return [...prev, awarenessId];
+        });
     };
 
     const handleSendEmergency = async (e) => {
@@ -116,6 +163,8 @@ const EmergencyAlerts = () => {
         const payload = {
             title: formData.title.trim(),
             message: formData.message.trim(),
+            alertType: formData.alertType,
+            awarenessIds: selectedAwarenessIds,
             targetRoles: formData.targetRoles,
             location: {
                 type: 'Point',
@@ -140,6 +189,7 @@ const EmergencyAlerts = () => {
             setFormData({
                 title: '',
                 message: '',
+                alertType: 'fire',
                 targetRoles: ['CITIZEN', 'OFFICER'],
                 expiresAt: ''
             });
@@ -208,6 +258,60 @@ const EmergencyAlerts = () => {
                                 placeholder="Describe the emergency and immediate guidance"
                                 required
                             />
+                        </div>
+
+                        <div>
+                            <label className="text-sm text-text-muted">Emergency Type</label>
+                            <select
+                                className="input-field"
+                                value={formData.alertType}
+                                onChange={(e) => setFormData({ ...formData, alertType: e.target.value })}
+                            >
+                                {ALERT_TYPE_OPTIONS.map((type) => (
+                                    <option key={type} value={type}>
+                                        {type}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-text-muted mt-2">
+                                This links the emergency alert to matching awareness guidelines.
+                            </p>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="text-sm text-text-muted mb-2 block">Awareness Guidelines Set</label>
+                            <p className="text-xs text-text-muted mb-3">
+                                Guidelines are auto-loaded from this emergency type. You can unselect/select items before sending.
+                            </p>
+                            {loadingAwareness ? (
+                                <div className="p-3 rounded-lg border border-border bg-surface-light text-sm text-text-muted">Loading awareness guidelines...</div>
+                            ) : relevantAwareness.length === 0 ? (
+                                <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-sm text-amber-300">
+                                    No awareness guidelines are configured for type: {formData.alertType}. Create awareness content with this trigger first.
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {relevantAwareness.map((item) => {
+                                        const id = item._id || item.id;
+                                        const checked = selectedAwarenessIds.includes(id);
+                                        return (
+                                            <label key={id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-surface-light cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => toggleAwarenessSelection(id)}
+                                                    className="mt-1"
+                                                />
+                                                <div>
+                                                    <p className="text-sm font-medium">{item.title}</p>
+                                                    <p className="text-xs text-amber-300 uppercase mt-1">{item.category}</p>
+                                                    <p className="text-xs text-text-muted mt-2">{item.content}</p>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         <div className="md:col-span-2">
@@ -292,6 +396,23 @@ const EmergencyAlerts = () => {
                                 <div className="text-xl font-semibold">{sendResult.whatsappDelivery?.failed || 0}</div>
                             </div>
                         </div>
+
+                        <div className="mt-5">
+                            <h3 className="text-sm font-semibold mb-2">Linked Awareness Guidelines</h3>
+                            {sendResult.awarenessGuidelines?.length ? (
+                                <div className="space-y-2">
+                                    {sendResult.awarenessGuidelines.map((item) => (
+                                        <div key={item._id || item.id} className="p-3 rounded-lg border border-border bg-surface-light">
+                                            <div className="text-sm font-medium">{item.title}</div>
+                                            <div className="text-xs text-amber-300 uppercase mt-1">{item.category}</div>
+                                            <p className="text-xs text-text-muted mt-2 line-clamp-3">{item.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-text-muted">No awareness guidelines matched this emergency type.</p>
+                            )}
+                        </div>
                     </section>
                 )}
 
@@ -319,6 +440,24 @@ const EmergencyAlerts = () => {
                                         <span className="badge">{alert.priority || 'MEDIUM'}</span>
                                     </div>
                                     <p className="text-sm text-text-muted mt-2">{alert.message}</p>
+                                    {(alert.alertType || alert.relatedAwareness?.length > 0) && (
+                                        <div className="mt-3 p-3 rounded-lg bg-surface-light border border-border">
+                                            <p className="text-xs text-text-muted mb-2">
+                                                Type: <span className="text-amber-300 uppercase">{alert.alertType || 'general'}</span>
+                                            </p>
+                                            {alert.relatedAwareness?.length ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {dedupeAwarenessItems(alert.relatedAwareness).map((item) => (
+                                                        <span key={item._id || item.id} className="px-2 py-1 text-xs rounded-md bg-primary/20 text-primary border border-primary/30">
+                                                            {item.title}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-text-muted">No linked guidelines</p>
+                                            )}
+                                        </div>
+                                    )}
                                     <div className="text-xs text-text-muted mt-3 flex items-center gap-2">
                                         <Clock size={12} />
                                         {new Date(alert.createdAt).toLocaleString()}
