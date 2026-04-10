@@ -67,13 +67,18 @@ function ResourceManagement() {
   }, [statusFilter, notify]);
 
   const loadStaff = useCallback(async () => {
+    if (!isAdmin) {
+      setStaff([]);
+      return;
+    }
+
     try {
       const data = await resourceService.getAllStaff();
       setStaff(Array.isArray(data) ? data : []);
     } catch {
       setStaff([]);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     loadResources();
@@ -86,14 +91,6 @@ function ResourceManagement() {
       return acc;
     }, {});
   }, [resources]);
-
-  const currentStaff = useMemo(() => {
-    if (!user?._id) return null;
-    return staff.find((s) => {
-      const staffUserId = typeof s?.userId === 'string' ? s.userId : s?.userId?._id;
-      return staffUserId === user._id;
-    }) || null;
-  }, [staff, user?._id]);
 
   const findStaffById = useCallback((staffId) => {
     if (!staffId) return null;
@@ -110,12 +107,12 @@ function ResourceManagement() {
   }, [findStaffById]);
 
   const isAssignedToCurrentOfficer = useCallback((resource) => {
-    if (!currentStaff?._id) return false;
-    const assignedId = typeof resource?.assignedTo === 'string'
-      ? resource.assignedTo
-      : resource?.assignedTo?._id;
-    return assignedId === currentStaff._id;
-  }, [currentStaff?._id]);
+    const assignedUserId = typeof resource?.assignedTo?.userId === 'string'
+      ? resource.assignedTo.userId
+      : resource?.assignedTo?.userId?._id;
+
+    return !!assignedUserId && assignedUserId === user?._id;
+  }, [user?._id]);
 
   const usageReport = useMemo(() => {
     const total = resources.length;
@@ -252,13 +249,8 @@ function ResourceManagement() {
   };
 
   const takeResource = async (resourceId) => {
-    if (!currentStaff?._id) {
-      notify('Officer profile not found in staff list. Ask admin to add staff profile.', 'error');
-      return;
-    }
-
     try {
-      await resourceService.assignResource(resourceId, currentStaff._id);
+      await resourceService.assignResource(resourceId);
       notify('Resource taken and locked to your account');
       await loadResources();
     } catch (error) {

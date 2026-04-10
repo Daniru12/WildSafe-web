@@ -56,6 +56,16 @@ function StaffManagement() {
     });
   }, [query, staff]);
 
+  const availableUsers = useMemo(() => {
+    const assignedUserIds = new Set(
+      staff
+        .map((item) => (typeof item?.userId === 'string' ? item.userId : item?.userId?._id))
+        .filter(Boolean)
+    );
+
+    return users.filter((u) => !assignedUserIds.has(u?._id));
+  }, [users, staff]);
+
   const openCreate = () => {
     setEditing(null);
     setForm({ userId: '', department: DEPARTMENTS[0], permissions: [], name: '', email: '', password: '', phone: '' });
@@ -93,6 +103,24 @@ function StaffManagement() {
 
   const saveStaff = async (event) => {
     event.preventDefault();
+
+    if (!editing && !creatingUser && !form.userId) {
+      notify('Please select a user to add as staff', 'error');
+      return;
+    }
+
+    if (!editing && !creatingUser) {
+      const isAlreadyAssigned = staff.some((item) => {
+        const existingUserId = typeof item?.userId === 'string' ? item.userId : item?.userId?._id;
+        return existingUserId === form.userId;
+      });
+
+      if (isAlreadyAssigned) {
+        notify('Selected user is already assigned as staff', 'error');
+        return;
+      }
+    }
+
     try {
       if (editing?._id) {
         await api.put(`/staff/${editing._id}`, {
@@ -101,10 +129,41 @@ function StaffManagement() {
         });
         notify('Staff updated');
       } else {
-        await api.post('/staff', form);
+        let targetUserId = form.userId;
+
+        if (creatingUser) {
+          const name = (form.name || '').trim();
+          const email = (form.email || '').trim();
+          const password = form.password || '';
+
+          if (!name || !email || !password) {
+            notify('Name, email and password are required to create a new user', 'error');
+            return;
+          }
+
+          const registerRes = await api.post('/auth/register', {
+            name,
+            email,
+            password,
+            phone: (form.phone || '').trim()
+          });
+
+          targetUserId = registerRes?.data?.user?.id || registerRes?.data?.user?._id;
+          if (!targetUserId) {
+            notify('User was created but could not be linked to staff', 'error');
+            return;
+          }
+        }
+
+        await api.post('/staff', {
+          userId: targetUserId,
+          department: form.department,
+          permissions: form.permissions
+        });
         notify('Staff added');
       }
       setShowModal(false);
+      setCreatingUser(false);
       await loadStaff();
     } catch (error) {
       notify(error?.response?.data?.message || 'Save failed', 'error');
@@ -176,11 +235,15 @@ function StaffManagement() {
                     required={!creatingUser}
                   >
                     <option value="">-- Select existing user --</option>
-                    {users.map((u) => (
+                    {availableUsers.map((u) => (
                       <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
                     ))}
                     <option value="NEW">+ Create new user...</option>
                   </select>
+
+                  {!creatingUser && availableUsers.length === 0 && (
+                    <p className="mt-2 text-xs text-text-muted">No unassigned users available. Create a new user to continue.</p>
+                  )}
 
                   {creatingUser && (
                     <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">

@@ -18,8 +18,9 @@ const resourceService = {
     const response = await api.put(`/resources/${id}`, resourceData);
     return response.data;
   },
-  assignResource: async (id, staffId) => {
-    const response = await api.put(`/resources/${id}/assign`, { staffId });
+  assignResource: async (id, staffId = null) => {
+    const payload = staffId ? { staffId } : {};
+    const response = await api.put(`/resources/${id}/assign`, payload);
     return response.data;
   },
   releaseResource: async (id) => {
