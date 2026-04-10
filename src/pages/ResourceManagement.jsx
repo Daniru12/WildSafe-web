@@ -22,6 +22,7 @@ function ResourceManagement() {
   const navPt = useFixedNavOffsetClass();
   const isAdmin = user?.role === 'ADMIN';
   const isOfficer = user?.role === 'OFFICER';
+  const currentUserId = user?._id || user?.id;
 
   const [resources, setResources] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -111,8 +112,8 @@ function ResourceManagement() {
       ? resource.assignedTo.userId
       : resource?.assignedTo?.userId?._id;
 
-    return !!assignedUserId && assignedUserId === user?._id;
-  }, [user?._id]);
+    return !!assignedUserId && !!currentUserId && assignedUserId === currentUserId;
+  }, [currentUserId]);
 
   const usageReport = useMemo(() => {
     const total = resources.length;
@@ -560,7 +561,7 @@ function ResourceManagement() {
 
                 {isOfficer && r.status === 'ASSIGNED' && isAssignedToCurrentOfficer(r) && (
                   <button onClick={() => releaseResource(r._id)} className="flex-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-300">
-                    Release Resource
+                    Set Available
                   </button>
                 )}
 
