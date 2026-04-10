@@ -6,6 +6,7 @@ import {
     LayoutDashboard,
     Shield,
     BarChart3,
+    AlertTriangle,
     Package,
     Users,
     LogOut,
@@ -19,14 +20,17 @@ import {
 import NotificationDropdown from './NotificationDropdown';
 
 const adminNavItems = [
-    { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Citizen Registry', to: '/users', icon: Users },
-    { label: 'Case Control', to: '/case-management', icon: Shield },
+
+
+    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+    { label: 'Users', to: '/users', icon: Users },
+    { label: 'Case Management', to: '/case-management', icon: Shield },
     { label: 'Ranger Missions', to: '/ranger-missions', icon: Navigation2, matchPrefix: true },
     { label: 'Groq AI steps', to: '/ranger-ai-steps', icon: Sparkles, matchPrefix: true },
-    { label: 'Data Intelligence', to: '/analytics', icon: BarChart3 },
-    { label: 'Asset Logistics', to: '/resources', icon: Package },
-    { label: 'Field Staff', to: '/staff', icon: Users },
+    { label: 'Alerts', to: '/alerts', icon: AlertTriangle },
+    { label: 'Analytics', to: '/analytics', icon: BarChart3 },
+    { label: 'Resources', to: '/resources', icon: Package },
+    { label: 'Staff', to: '/staff', icon: Users },
 ];
 
 const AdminLayout = ({ children }) => {

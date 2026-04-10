@@ -18,6 +18,7 @@ import RangerMissionDetail from './pages/RangerMissionDetail';
 import RangerGroqAiHub from './pages/RangerGroqAiHub';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
+import EmergencyAlerts from './pages/EmergencyAlerts';
 import StaffManagement from './pages/StaffManagement';
 import ResourceManagement from './pages/ResourceManagement';
 import AiInsights from './pages/AiInsights';
@@ -125,6 +126,17 @@ function App() {
             }
           />
 
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <EmergencyAlerts />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
 
           <Route
             path="/case-management"
@@ -184,7 +196,7 @@ function App() {
           <Route
             path="/notifications"
             element={
-              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+              <ProtectedRoute roles={['CITIZEN', 'OFFICER', 'ADMIN']}>
                 <RoleBasedLayout>
                   <NotificationCenter />
                 </RoleBasedLayout>

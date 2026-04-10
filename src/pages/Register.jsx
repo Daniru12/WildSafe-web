@@ -8,9 +8,12 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        phone: ''
+        phone: '',
+        location: null
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
+    const [locationError, setLocationError] = useState('');
     const { register, error } = useAuth();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
@@ -20,8 +23,47 @@ const Register = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleFetchLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation is not supported in this browser.');
+            return;
+        }
+
+        setIsLocating(true);
+        setLocationError('');
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                setFormData((prev) => ({
+                    ...prev,
+                    location: {
+                        type: 'Point',
+                        coordinates: [longitude, latitude]
+                    }
+                }));
+                setIsLocating(false);
+            },
+            () => {
+                setLocationError('Location access denied or unavailable. Please allow location to continue.');
+                setIsLocating(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!formData.location) {
+            setLocationError('Please fetch your location before registering.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await register(formData);
@@ -311,6 +353,32 @@ const Register = () => {
                                                     onChange={handleChange}
                                                 />
                                             </div>
+                                        </div>
+
+                                        {/* Registration Location */}
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-medium text-amber-200/80">
+                                                Location <span className="text-amber-300">(required for nearest emergency alerts)</span>
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={handleFetchLocation}
+                                                disabled={isLocating}
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-black/40 border border-amber-500/30 rounded-lg text-amber-200/90 hover:text-white hover:bg-amber-600/20 hover:border-amber-400 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                <MapPin size={16} />
+                                                {isLocating ? 'Fetching location...' : 'Use My Current Location'}
+                                            </button>
+
+                                            <div className="text-xs text-amber-100/80 bg-black/30 border border-amber-500/20 rounded-lg px-3 py-2">
+                                                {formData.location
+                                                    ? `Captured: ${formData.location.coordinates[1].toFixed(6)}, ${formData.location.coordinates[0].toFixed(6)}`
+                                                    : 'No location captured yet'}
+                                            </div>
+
+                                            {locationError && (
+                                                <p className="text-xs text-red-300">{locationError}</p>
+                                            )}
                                         </div>
 
                                         {/* Password */}
