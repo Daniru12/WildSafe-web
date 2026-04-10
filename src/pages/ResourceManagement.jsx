@@ -302,6 +302,8 @@ function ResourceManagement() {
               </button>
             </div>
 
+            <p className="mb-3 text-xs text-text-muted">Step 1: Get AI recommendation (optional)</p>
+
             <button
               onClick={() => requestAiSuggestion(showAssignModal)}
               disabled={isSuggesting}
@@ -314,6 +316,11 @@ function ResourceManagement() {
             {aiSuggestedStaff && (
               <div className="mb-4 rounded-lg border border-purple-500/30 bg-purple-500/10 p-3 text-sm">
                 <p className="mb-2 font-semibold text-purple-300">AI Recommendation</p>
+                {aiSuggestedStaff?.staffId && (
+                  <p className="mb-2 text-xs text-purple-200/80">
+                    Suggested staff ID: {aiSuggestedStaff.staffId}
+                  </p>
+                )}
                 <p className="text-text-muted">{aiSuggestedStaff?.reasoning || String(aiSuggestedStaff)}</p>
                 <button
                   onClick={() => setAssignStaffId(aiSuggestedStaff?.staffId || aiSuggestedStaff?._id || '')}
@@ -324,18 +331,20 @@ function ResourceManagement() {
               </div>
             )}
 
-            <label className="mb-1 block text-sm font-medium text-text-muted">Select Staff</label>
+            <p className="mb-2 text-xs text-text-muted">Step 2: Choose staff member and confirm assignment</p>
+            <label className="mb-1 block text-sm font-medium text-text-muted">Select Staff Member</label>
             <select className="input-field" value={assignStaffId} onChange={(e) => setAssignStaffId(e.target.value)}>
-              <option value="">Select staff member</option>
+              <option value="">Choose one staff member</option>
               {staff.map((s) => (
                 <option key={s._id} value={s._id}>
                   {s?.userId?.name || 'Unknown'} ({(s?.department || '').replace('_', ' ')})
                 </option>
               ))}
             </select>
+            <p className="mt-2 text-xs text-text-muted">The selected staff member will lock this resource until it is set available again.</p>
 
             <button onClick={assignResource} disabled={!assignStaffId} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
-              Confirm Assignment
+              Assign Resource Now
             </button>
           </div>
         </div>
@@ -492,18 +501,25 @@ function ResourceManagement() {
           ))}
         </div>
 
+        <div className="mb-4 rounded-xl border border-white/10 bg-surface/30 p-3 text-sm text-text-muted">
+          {isAdmin
+            ? 'Action guide: Assign to lock resource for a staff member. Edit to update details. Archive to retire a resource.'
+            : 'Action guide: Take Resource to reserve it for yourself. Set Available after use so other officers can take it.'}
+        </div>
+
         <form onSubmit={handleAiSearch} className="mb-8 flex items-center gap-2 rounded-2xl border border-white/10 bg-surface/40 p-3">
           <Sparkles size={16} className="text-purple-300" />
           <input
             className="w-full bg-transparent outline-none"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Semantic AI search for resources"
+            placeholder="Search resources by meaning, type, location, or description"
           />
           <button type="submit" disabled={isAiSearching} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
             {isAiSearching ? 'Searching...' : 'Search'}
           </button>
         </form>
+        <p className="-mt-6 mb-8 text-xs text-text-muted">Example: "available medical kits near north zone" or "assigned communication devices"</p>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {loading && (

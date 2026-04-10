@@ -1,9 +1,33 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Activity, Bot, CheckCircle2, Loader2, Package, Search, Sparkles, UserCog, Zap } from 'lucide-react';
+import { Activity, Bot, Loader2, Package, Search, Sparkles, UserCog, Zap } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import aiService from '../services/aiService';
+
+const KYC_STATUS_OPTIONS = [
+  { value: 'VERIFIED', label: 'Verified' },
+  { value: 'PENDING', label: 'Pending Verification' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'UNDER_REVIEW', label: 'Under Review' }
+];
+
+const ASSET_SCENARIO_OPTIONS = [
+  { value: 'PATROL_VEHICLE_LOW_FUEL', label: 'Patrol vehicle has low fuel' },
+  { value: 'MEDICAL_KIT_RESTOCK', label: 'Medical kit needs restock' },
+  { value: 'DRONE_BATTERY_LOW', label: 'Drone battery is low before mission' },
+  { value: 'RADIO_SIGNAL_WEAK', label: 'Communication radio has weak signal' },
+  { value: 'WILDLIFE_RESCUE_URGENT', label: 'Urgent wildlife rescue deployment needed' },
+  { value: 'OTHER', label: 'Other (enter custom details)' }
+];
+
+const SCENARIO_PROMPTS = {
+  PATROL_VEHICLE_LOW_FUEL: 'Patrol vehicle fuel level is critically low and next patrol starts soon.',
+  MEDICAL_KIT_RESTOCK: 'Medical kit inventory is below safe threshold and incident risk is rising.',
+  DRONE_BATTERY_LOW: 'Mission drone battery health is low and flight time may be insufficient.',
+  RADIO_SIGNAL_WEAK: 'Field communication radio signal is unstable in the assigned zone.',
+  WILDLIFE_RESCUE_URGENT: 'High-priority wildlife rescue request requires immediate resource coordination.'
+};
 
 function AiInsights() {
   const navPt = useFixedNavOffsetClass();
@@ -17,10 +41,23 @@ function AiInsights() {
   const [suggestions, setSuggestions] = useState({});
   const [suggestingId, setSuggestingId] = useState(null);
 
-  const [kycStatus, setKycStatus] = useState('');
-  const [assetDetails, setAssetDetails] = useState('');
+  const [kycStatus, setKycStatus] = useState('VERIFIED');
+  const [assetScenario, setAssetScenario] = useState('PATROL_VEHICLE_LOW_FUEL');
+  const [customAssetDetails, setCustomAssetDetails] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuggestion, setActionSuggestion] = useState('');
+
+  const formatActionSuggestion = (value) => {
+    const raw = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+
+    return raw
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/\r/g, '')
+      .replace(/(\d+\.\s)/g, '\n$1')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
 
   const loadResources = useCallback(async () => {
     try {
@@ -63,9 +100,19 @@ function AiInsights() {
 
   const getActionSuggestion = async (event) => {
     event.preventDefault();
+
+    const details = assetScenario === 'OTHER'
+      ? customAssetDetails.trim()
+      : (SCENARIO_PROMPTS[assetScenario] || 'General operational resource condition.');
+
+    if (!details) {
+      setActionSuggestion('Please provide details for the selected custom scenario.');
+      return;
+    }
+
     setActionLoading(true);
     try {
-      const result = await aiService.suggestUserAction(kycStatus, assetDetails);
+      const result = await aiService.suggestUserAction(kycStatus, details);
       setActionSuggestion(result?.suggestion || 'No action suggestion returned');
     } catch {
       setActionSuggestion('Unable to generate action suggestion at this time');
@@ -178,12 +225,44 @@ function AiInsights() {
               <form onSubmit={getActionSuggestion} className="space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-text-muted">KYC Status</label>
-                  <input className="input-field" value={kycStatus} onChange={(e) => setKycStatus(e.target.value)} placeholder="e.g. VERIFIED" required />
+                  <select className="input-field" value={kycStatus} onChange={(e) => setKycStatus(e.target.value)}>
+                    {KYC_STATUS_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">Asset Details</label>
-                  <textarea className="input-field resize-none" rows={4} value={assetDetails} onChange={(e) => setAssetDetails(e.target.value)} placeholder="Current conditions and constraints" required />
+                  <label className="mb-1 block text-sm font-medium text-text-muted">Asset Situation</label>
+                  <select className="input-field" value={assetScenario} onChange={(e) => setAssetScenario(e.target.value)}>
+                    {ASSET_SCENARIO_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
+
+                {assetScenario === 'OTHER' && (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-text-muted">Enter Custom Details</label>
+                    <textarea
+                      className="input-field resize-none"
+                      rows={4}
+                      value={customAssetDetails}
+                      onChange={(e) => setCustomAssetDetails(e.target.value)}
+                      placeholder="Describe your custom situation"
+                      required
+                    />
+                  </div>
+                )}
+
+                {assetScenario !== 'OTHER' && (
+                  <p className="rounded-lg border border-white/10 bg-surface/30 p-3 text-xs text-text-muted">
+                    Selected scenario details: {SCENARIO_PROMPTS[assetScenario]}
+                  </p>
+                )}
+
+                <p className="text-xs text-text-muted">No key typing needed. Select options and generate action suggestion.</p>
+
                 <button type="submit" disabled={actionLoading} className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
                   {actionLoading ? 'Generating...' : 'Generate Action'}
                 </button>
@@ -194,7 +273,22 @@ function AiInsights() {
                 {!actionSuggestion && <p className="text-sm text-text-muted">Awaiting input.</p>}
                 {actionSuggestion && (
                   <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-white/90">
-                    <p>{typeof actionSuggestion === 'string' ? actionSuggestion : JSON.stringify(actionSuggestion)}</p>
+                    <div className="space-y-2">
+                      {formatActionSuggestion(actionSuggestion)
+                        .split('\n')
+                        .map((line) => line.trim())
+                        .filter(Boolean)
+                        .map((line, index) => {
+                          const isHeading = /^(Approval Action:|Rationale:|Key information needed includes:|Maintenance or replacement plan:)/i.test(line);
+                          const normalizedLine = line.replace(/^(\d+\.\s+)/, '• ');
+
+                          return (
+                            <p key={`${line}-${index}`} className={isHeading ? 'font-semibold text-white' : 'text-white/90'}>
+                              {normalizedLine}
+                            </p>
+                          );
+                        })}
+                    </div>
                   </div>
                 )}
               </div>
