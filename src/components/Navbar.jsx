@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from './NotificationDropdown';
-import { 
-    LogOut, LayoutDashboard, Menu, X, Globe, User, Plus, 
-    Sparkles, ChevronDown, Navigation2 
-} from 'lucide-react';
+
+
+import { Shield, LogOut, LayoutDashboard, FileText, BarChart3, Menu, X, Globe, User, Plus, Package, AlertTriangle, Sparkles, ChevronDown, Navigation2 } from 'lucide-react';
 
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
@@ -81,6 +80,28 @@ const Navbar = () => {
                             <div className="h-6 w-px bg-white/10 mx-2" />
                         )}
 
+
+                            {user?.role === 'OFFICER' && (
+                                <>
+                                    <Link to="/case-management" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <Shield size={18} />
+                                        <span>Case Management</span>
+                                    </Link>
+                                    <Link to="/alerts" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <AlertTriangle size={18} />
+                                        <span>Alerts</span>
+                                    </Link>
+                                    <Link to="/resources" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <Package size={18} />
+                                        <span>Resources</span>
+                                    </Link>
+                                    <Link to="/analytics" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
+                                        <BarChart3 size={18} />
+                                        <span>Analytics</span>
+                                    </Link>
+                                </>
+                            )}
+
                         {isAuthenticated ? (
                             <div className="flex items-center gap-6">
                                 <Link 
@@ -94,6 +115,7 @@ const Navbar = () => {
                                     <span>Dashboard</span>
                                 </Link>
 
+
                                 {user?.role === 'CITIZEN' && (
                                     <div className="flex items-center gap-6">
                                         <Link 
@@ -106,22 +128,26 @@ const Navbar = () => {
                                     </div>
                                 )}
 
-                                {user?.role === 'OFFICER' && (
+                                {['OFFICER', 'CITIZEN'].includes(user?.role) && (
                                     <>
-                                        <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
-                                            <Navigation2 size={18} />
-                                            <span>Ranger Missions</span>
-                                        </Link>
-                                        <Link
-                                            to="/ranger-ai-steps"
-                                            className={`
-                                                flex items-center gap-2 text-sm font-bold transition-all
-                                                ${isGroqAiSteps ? 'text-primary' : 'text-text-muted hover:text-white'}
-                                            `}
-                                        >
-                                            <Sparkles size={18} />
-                                            <span>Groq AI steps</span>
-                                        </Link>
+                                        {user?.role === 'OFFICER' && (
+                                            <>
+                                                <Link to="/ranger-missions" className="flex items-center gap-2 text-sm text-text-muted hover:text-white font-bold transition-all">
+                                                    <Navigation2 size={18} />
+                                                    <span>Ranger Missions</span>
+                                                </Link>
+                                                <Link
+                                                    to="/ranger-ai-steps"
+                                                    className={`
+                                                        flex items-center gap-2 text-sm font-bold transition-all
+                                                        ${isGroqAiSteps ? 'text-primary' : 'text-text-muted hover:text-white'}
+                                                    `}
+                                                >
+                                                    <Sparkles size={18} />
+                                                    <span>Groq AI steps</span>
+                                                </Link>
+                                            </>
+                                        )}
                                         <div className="flex items-center gap-4">
                                             <NotificationDropdown />
                                         </div>
@@ -170,7 +196,7 @@ const Navbar = () => {
 
                     {/* Mobile Toggle */}
                     <div className="md:hidden flex items-center gap-4">
-                        {isAuthenticated && user?.role === 'OFFICER' && <NotificationDropdown />}
+                        {isAuthenticated && ['OFFICER', 'CITIZEN'].includes(user?.role) && <NotificationDropdown />}
                         <button 
                             onClick={toggleMenu}
                             className="p-2 text-white hover:text-primary transition-colors"

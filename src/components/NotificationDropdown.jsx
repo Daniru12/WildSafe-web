@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import NotificationCenter from './NotificationCenter';
 import { 
   Bell, 
   BellRing, 
   X, 
-  Check,
-  Eye
+    Check
 } from 'lucide-react';
 
 const NotificationDropdown = () => {
@@ -22,13 +20,25 @@ const NotificationDropdown = () => {
         
         // Set up polling for new notifications
         const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
+
+        const handleNotificationsUpdated = () => {
+            fetchUnreadCount();
+            if (isOpen) {
+                fetchNotifications();
+            }
+        };
+
+        window.addEventListener('notifications:updated', handleNotificationsUpdated);
         
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notifications:updated', handleNotificationsUpdated);
+        };
+    }, [isOpen]);
 
     const fetchUnreadCount = async () => {
         try {
-            const response = await api.get('/notifications/unread-count');
+            const response = await api.get('/notifications/stats');
             setUnreadCount(response.data.unreadCount || 0);
         } catch (err) {
             console.error('Failed to fetch unread count:', err);
@@ -36,11 +46,9 @@ const NotificationDropdown = () => {
     };
 
     const fetchNotifications = async () => {
-        if (isOpen) return; // Don't fetch if already open
-        
         try {
             setLoading(true);
-            const response = await api.get('/notifications?limit=5');
+            const response = await api.get('/notifications?limit=5&isRead=false');
             setNotifications(response.data.notifications || []);
         } catch (err) {
             console.error('Failed to fetch notifications:', err);
@@ -59,33 +67,45 @@ const NotificationDropdown = () => {
     const markAsRead = async (notificationId) => {
         try {
             await api.put(`/notifications/${notificationId}/read`);
-            setNotifications(notifications.map(notif => 
-                notif._id === notificationId ? { ...notif, read: true } : notif
-            ));
-            setUnreadCount(Math.max(0, unreadCount - 1));
+            setNotifications((prev) => prev.filter((notif) => notif._id !== notificationId));
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+            window.dispatchEvent(new Event('notifications:updated'));
         } catch (err) {
             console.error('Failed to mark notification as read:', err);
         }
     };
 
+    const extractCaseId = (notification) => {
+        if (notification.caseId) return notification.caseId;
+        if (notification.metadata?.caseId) return notification.metadata.caseId;
+        if (notification.relatedIncident?._id) return notification.relatedIncident._id;
+        if (notification.relatedIncident) return notification.relatedIncident;
+        return null;
+    };
+
     const handleNotificationClick = (notification) => {
-        if (!notification.read) {
+        if (!notification.isRead) {
             markAsRead(notification._id);
         }
         
         // Close dropdown and navigate
         setIsOpen(false);
         
-        if (notification.caseId) {
-            navigate(`/cases/${notification.caseId}`);
+        const caseId = extractCaseId(notification);
+        if (caseId) {
+            navigate(`/cases/${caseId}`);
+            return;
         }
+
+        navigate('/notifications');
     };
 
     const markAllAsRead = async () => {
         try {
             await api.put('/notifications/read-all');
-            setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+            setNotifications([]);
             setUnreadCount(0);
+            window.dispatchEvent(new Event('notifications:updated'));
         } catch (err) {
             console.error('Failed to mark all as read:', err);
         }
@@ -108,10 +128,13 @@ const NotificationDropdown = () => {
 
     const getNotificationIcon = (type) => {
         const icons = {
-            'CASE_ASSIGNED': '📋',
-            'STATUS_UPDATE': '📝',
-            'RESOLUTION': '✅',
-            'URGENT_ALERT': '🚨'
+            'INCIDENT_UPDATE': '📝',
+            'ASSIGNMENT': '📋',
+            'SYSTEM': '📢',
+            'CASE_UPDATE': '🗂️',
+            'NEW_INCIDENT': '🚨',
+            'geo-alert': '📍',
+            'awareness': '📘'
         };
         return icons[type] || '📢';
     };
@@ -188,7 +211,7 @@ const NotificationDropdown = () => {
                                             key={notification._id}
                                             onClick={() => handleNotificationClick(notification)}
                                             className={`p-4 hover:bg-surface-light transition-colors cursor-pointer ${
-                                                !notification.read ? 'bg-blue-500/5' : ''
+                                                !notification.isRead ? 'bg-blue-500/5' : ''
                                             }`}
                                         >
                                             <div className="flex items-start gap-3">
@@ -197,16 +220,16 @@ const NotificationDropdown = () => {
                                                 </div>
                                                 
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-sm ${!notification.read ? 'font-semibold' : ''} line-clamp-2`}>
+                                                    <p className={`text-sm ${!notification.isRead ? 'font-semibold' : ''} line-clamp-2`}>
                                                         {notification.message}
                                                     </p>
                                                     
                                                     <div className="flex items-center justify-between mt-1">
                                                         <span className="text-xs text-text-muted">
-                                                            {formatTime(notification.sentAt)}
+                                                            {formatTime(notification.createdAt)}
                                                         </span>
                                                         
-                                                        {!notification.read && (
+                                                        {!notification.isRead && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -228,19 +251,17 @@ const NotificationDropdown = () => {
                         </div>
 
                         {/* Footer */}
-                        {notifications.length > 0 && (
-                            <div className="p-3 border-t border-border">
-                                <button
-                                    onClick={() => {
-                                        setIsOpen(false);
-                                        navigate('/notifications');
-                                    }}
-                                    className="w-full text-center text-sm text-primary hover:underline"
-                                >
-                                    View all notifications
-                                </button>
-                            </div>
-                        )}
+                        <div className="p-3 border-t border-border bg-surface-light/40">
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    navigate('/notifications');
+                                }}
+                                className="w-full rounded-md border border-primary/40 px-3 py-2 text-center text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                            >
+                                See all notifications
+                            </button>
+                        </div>
                     </div>
                 </>
             )}
