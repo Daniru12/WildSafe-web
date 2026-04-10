@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X } from 'lucide-react';
+import { Archive, Check, Edit2, Loader2, Plus, Sparkles, UserCog, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
-import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import aiService from '../services/aiService';
+import resourceService from '../services/resourceService';
 
 const RESOURCE_TYPES = ['VEHICLE', 'EQUIPMENT', 'COMMUNICATION_DEVICE', 'MEDICAL_KIT', 'WEAPON', 'DRONE', 'OTHER'];
-const STATUS_OPTIONS = ['AVAILABLE', 'ASSIGNED', 'MAINTENANCE', 'ARCHIVED'];
+const STATUS_OPTIONS = ['AVAILABLE', 'ASSIGNED', 'ARCHIVED'];
 
 const statusBadge = {
   AVAILABLE: 'bg-emerald-500/20 text-emerald-400',
@@ -17,7 +18,11 @@ const statusBadge = {
 };
 
 function ResourceManagement() {
+  const { user } = useAuth();
   const navPt = useFixedNavOffsetClass();
+  const isAdmin = user?.role === 'ADMIN';
+  const isOfficer = user?.role === 'OFFICER';
+
   const [resources, setResources] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +57,7 @@ function ResourceManagement() {
   const loadResources = useCallback(async () => {
     setLoading(true);
     try {
-      const params = statusFilter ? `?status=${statusFilter}` : '';
-      const { data } = await api.get(`/resources${params}`);
+      const data = await resourceService.getAllResources(statusFilter);
       setResources(Array.isArray(data) ? data : []);
     } catch (error) {
       notify(error?.response?.data?.message || 'Failed to load resources', 'error');
@@ -64,7 +68,7 @@ function ResourceManagement() {
 
   const loadStaff = useCallback(async () => {
     try {
-      const { data } = await api.get('/staff');
+      const data = await resourceService.getAllStaff();
       setStaff(Array.isArray(data) ? data : []);
     } catch {
       setStaff([]);
@@ -82,6 +86,56 @@ function ResourceManagement() {
       return acc;
     }, {});
   }, [resources]);
+
+  const currentStaff = useMemo(() => {
+    if (!user?._id) return null;
+    return staff.find((s) => {
+      const staffUserId = typeof s?.userId === 'string' ? s.userId : s?.userId?._id;
+      return staffUserId === user._id;
+    }) || null;
+  }, [staff, user?._id]);
+
+  const findStaffById = useCallback((staffId) => {
+    if (!staffId) return null;
+    return staff.find((s) => s?._id === staffId) || null;
+  }, [staff]);
+
+  const getAssignedStaffName = useCallback((resource) => {
+    const assignedId = typeof resource?.assignedTo === 'string'
+      ? resource.assignedTo
+      : resource?.assignedTo?._id;
+
+    const assignedStaff = findStaffById(assignedId) || resource?.assignedTo;
+    return assignedStaff?.userId?.name || 'Assigned staff';
+  }, [findStaffById]);
+
+  const isAssignedToCurrentOfficer = useCallback((resource) => {
+    if (!currentStaff?._id) return false;
+    const assignedId = typeof resource?.assignedTo === 'string'
+      ? resource.assignedTo
+      : resource?.assignedTo?._id;
+    return assignedId === currentStaff._id;
+  }, [currentStaff?._id]);
+
+  const usageReport = useMemo(() => {
+    const total = resources.length;
+    const available = resources.filter((r) => r.status === 'AVAILABLE').length;
+    const assigned = resources.filter((r) => r.status === 'ASSIGNED').length;
+    const archived = resources.filter((r) => r.status === 'ARCHIVED').length;
+    const utilization = total > 0 ? Math.round((assigned / total) * 100) : 0;
+
+    const byDepartment = {};
+    resources
+      .filter((r) => r.status === 'ASSIGNED')
+      .forEach((r) => {
+        const assignedId = typeof r?.assignedTo === 'string' ? r.assignedTo : r?.assignedTo?._id;
+        const assignedStaff = findStaffById(assignedId) || r?.assignedTo;
+        const dept = assignedStaff?.department || 'Unspecified';
+        byDepartment[dept] = (byDepartment[dept] || 0) + 1;
+      });
+
+    return { total, available, assigned, archived, utilization, byDepartment };
+  }, [resources, findStaffById]);
 
   const openCreate = () => {
     setEditing(null);
@@ -112,14 +166,14 @@ function ResourceManagement() {
     try {
       const finalType = form.type === 'OTHER' ? (form.otherType || form.type) : form.type;
       if (editing?._id) {
-        await api.put(`/resources/${editing._id}`, {
+        await resourceService.updateResource(editing._id, {
           type: finalType,
           description: form.description,
           metadata
         });
         notify('Resource updated');
       } else {
-        await api.post('/resources', {
+        await resourceService.createResource({
           type: finalType,
           description: form.description,
           metadata
@@ -136,7 +190,7 @@ function ResourceManagement() {
   const archiveResource = async () => {
     if (!pendingArchiveId) return;
     try {
-      await api.delete(`/resources/${pendingArchiveId}`);
+      await resourceService.deleteResource(pendingArchiveId);
       notify('Resource archived');
       setPendingArchiveId(null);
       await loadResources();
@@ -186,7 +240,7 @@ function ResourceManagement() {
   const assignResource = async () => {
     if (!assignStaffId || !showAssignModal) return;
     try {
-      await api.put(`/resources/${showAssignModal}/assign`, { staffId: assignStaffId });
+      await resourceService.assignResource(showAssignModal, assignStaffId);
       notify('Resource assigned');
       setShowAssignModal(null);
       setAssignStaffId('');
@@ -194,6 +248,31 @@ function ResourceManagement() {
       await loadResources();
     } catch (error) {
       notify(error?.response?.data?.message || 'Assignment failed', 'error');
+    }
+  };
+
+  const takeResource = async (resourceId) => {
+    if (!currentStaff?._id) {
+      notify('Officer profile not found in staff list. Ask admin to add staff profile.', 'error');
+      return;
+    }
+
+    try {
+      await resourceService.assignResource(resourceId, currentStaff._id);
+      notify('Resource taken and locked to your account');
+      await loadResources();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Unable to take resource', 'error');
+    }
+  };
+
+  const releaseResource = async (resourceId) => {
+    try {
+      await resourceService.releaseResource(resourceId);
+      notify('Resource released and available again');
+      await loadResources();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Release failed', 'error');
     }
   };
 
@@ -220,7 +299,7 @@ function ResourceManagement() {
         </div>
       )}
 
-      {showAssignModal && (
+      {showAssignModal && isAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
             <div className="mb-5 flex items-center justify-between">
@@ -269,7 +348,7 @@ function ResourceManagement() {
         </div>
       )}
 
-      {showModal && (
+      {showModal && isAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="glass-morphism w-full max-w-xl rounded-2xl p-6">
             <div className="mb-6 flex items-center justify-between">
@@ -345,16 +424,67 @@ function ResourceManagement() {
       <main className={`mx-auto max-w-6xl px-6 ${navPt || 'mt-12'}`}>
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-black">Resource Command</h1>
-            <p className="text-text-muted">Manage assets with dedicated metadata and AI-assisted assignment.</p>
+            <h1 className="text-4xl font-black">{isAdmin ? 'Resource Command' : 'Resource Pool'}</h1>
+            <p className="text-text-muted">
+              {isAdmin
+                ? 'Manage assets, assign teams, and monitor usage in real time.'
+                : 'View all resources, take available equipment, and release when the mission is complete.'}
+            </p>
           </div>
           <div className="flex gap-2">
             <Link to="/ai-insights" className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-300">
               Open AI Insights
             </Link>
-            <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2"><Plus size={16} /> Add Resource</button>
+            {isAdmin && (
+              <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2"><Plus size={16} /> Add Resource</button>
+            )}
           </div>
         </div>
+
+        {isAdmin && (
+          <section className="mb-8 rounded-2xl border border-white/10 bg-surface/30 p-5">
+            <h2 className="text-xl font-bold">Admin Usage Report</h2>
+            <p className="mt-1 text-sm text-text-muted">Live overview of current resource utilization.</p>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-text-muted">Total</p>
+                <p className="text-2xl font-bold">{usageReport.total}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-text-muted">Available</p>
+                <p className="text-2xl font-bold text-emerald-400">{usageReport.available}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-text-muted">In Use</p>
+                <p className="text-2xl font-bold text-blue-400">{usageReport.assigned}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-text-muted">Archived</p>
+                <p className="text-2xl font-bold text-text-muted">{usageReport.archived}</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs text-text-muted">Utilization</p>
+                <p className="text-2xl font-bold">{usageReport.utilization}%</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+              <h3 className="text-sm font-semibold">Usage by Department</h3>
+              {Object.keys(usageReport.byDepartment).length === 0 ? (
+                <p className="mt-2 text-sm text-text-muted">No active assignments yet.</p>
+              ) : (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(usageReport.byDepartment).map(([dept, count]) => (
+                    <span key={dept} className="rounded-full border border-white/15 bg-surface-light px-3 py-1 text-xs">
+                      {dept.replace(/_/g, ' ')}: {count}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
           {STATUS_OPTIONS.map((status) => (
@@ -417,18 +547,44 @@ function ResourceManagement() {
                   <span className="text-text-muted">Location</span>
                   <span>{r.metadata?.location || 'Unknown'}</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-text-muted">Holder</span>
+                  <span>{r.status === 'ASSIGNED' ? getAssignedStaffName(r) : 'Unassigned'}</span>
+                </div>
               </div>
 
               <div className="flex gap-2">
-                {r.status !== 'ARCHIVED' && (
+                {isAdmin && r.status !== 'ARCHIVED' && (
                   <button onClick={() => openAssign(r._id)} className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
                     <span className="inline-flex items-center gap-1"><UserCog size={14} /> Assign</span>
                   </button>
                 )}
-                <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
-                  <Edit2 size={14} />
-                </button>
-                {r.status !== 'ARCHIVED' && (
+
+                {isOfficer && r.status === 'AVAILABLE' && (
+                  <button onClick={() => takeResource(r._id)} className="flex-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300">
+                    Take Resource
+                  </button>
+                )}
+
+                {isOfficer && r.status === 'ASSIGNED' && isAssignedToCurrentOfficer(r) && (
+                  <button onClick={() => releaseResource(r._id)} className="flex-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-300">
+                    Release Resource
+                  </button>
+                )}
+
+                {isOfficer && r.status === 'ASSIGNED' && !isAssignedToCurrentOfficer(r) && (
+                  <button disabled className="flex-1 cursor-not-allowed rounded-lg border border-white/10 bg-surface/20 px-3 py-2 text-sm font-semibold text-text-muted">
+                    Locked by Other Officer
+                  </button>
+                )}
+
+                {isAdmin && (
+                  <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
+                    <Edit2 size={14} />
+                  </button>
+                )}
+
+                {isAdmin && r.status !== 'ARCHIVED' && (
                   <button onClick={() => setPendingArchiveId(r._id)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-amber-500/40 hover:text-amber-400">
                     <Archive size={14} />
                   </button>
@@ -437,6 +593,49 @@ function ResourceManagement() {
             </article>
           ))}
         </div>
+
+        {isAdmin && (
+          <section className="mt-10 rounded-2xl border border-white/10 bg-surface/30 p-5">
+            <h2 className="text-xl font-bold">Assigned Resource Report</h2>
+            <p className="mt-1 text-sm text-text-muted">Current active usage by staff members.</p>
+
+            <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-black/30 text-text-muted">
+                  <tr>
+                    <th className="px-3 py-2">Resource</th>
+                    <th className="px-3 py-2">Type</th>
+                    <th className="px-3 py-2">Holder</th>
+                    <th className="px-3 py-2">Department</th>
+                    <th className="px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resources.filter((r) => r.status === 'ASSIGNED').length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-4 text-center text-text-muted">No assigned resources right now.</td>
+                    </tr>
+                  ) : resources.filter((r) => r.status === 'ASSIGNED').map((r) => {
+                    const assignedId = typeof r?.assignedTo === 'string' ? r.assignedTo : r?.assignedTo?._id;
+                    const assignedStaff = findStaffById(assignedId) || r?.assignedTo;
+
+                    return (
+                      <tr key={r._id} className="border-t border-white/10">
+                        <td className="px-3 py-2">{r.description || 'N/A'}</td>
+                        <td className="px-3 py-2">{(r.type || '').replace(/_/g, ' ')}</td>
+                        <td className="px-3 py-2">{assignedStaff?.userId?.name || 'Unknown'}</td>
+                        <td className="px-3 py-2">{(assignedStaff?.department || 'N/A').replace(/_/g, ' ')}</td>
+                        <td className="px-3 py-2">
+                          <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-300">ASSIGNED</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
