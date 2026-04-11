@@ -14,7 +14,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 
-const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'http://13.60.173.31:5000/api').replace(
+const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://api.wildsafe.daniruranathunga.live/api').replace(
     /\/api\/?$/,
     ''
 );
@@ -133,7 +133,7 @@ const RangerMissionDetail = () => {
         if (evidenceForm.gpsLng !== '') form.append('gpsLng', evidenceForm.gpsLng);
 
         const token = localStorage.getItem('token');
-        const base = import.meta.env.VITE_API_BASE_URL || 'http://13.60.173.31:5000/api';
+        const base = import.meta.env.VITE_API_BASE_URL || 'https://api.wildsafe.daniruranathunga.live/api';
         const url = `${base.replace(/\/$/, '')}/ranger/cases/${encodeURIComponent(caseId)}/evidence`;
         const res = await fetch(url, {
             method: 'POST',
