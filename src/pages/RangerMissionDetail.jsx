@@ -179,7 +179,7 @@ const RangerMissionDetail = () => {
                     <div className="rounded-xl border border-border bg-surface/50 p-4 space-y-2">
                         <label className="text-xs font-semibold text-text-muted uppercase">Decline reason</label>
                         <textarea
-                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm min-h-[80px]"
+                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm min-h-[80px]"
                             value={declineReason}
                             onChange={(e) => setDeclineReason(e.target.value)}
                             placeholder="Optional — helps dispatch reassign"
@@ -219,7 +219,7 @@ const RangerMissionDetail = () => {
                 <div className="space-y-2">
                     <label className="text-xs font-semibold text-text-muted uppercase">Arrival notes</label>
                     <textarea
-                        className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm min-h-[72px]"
+                        className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm min-h-[72px]"
                         value={arriveNotes}
                         onChange={(e) => setArriveNotes(e.target.value)}
                     />
@@ -282,11 +282,11 @@ const RangerMissionDetail = () => {
                             </div>
                         )}
 
-                        <div className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80">
+                        <div className="bg-white rounded-3xl p-8 border border-border shadow-premium mb-8">
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div>
                                     <div className="font-mono text-primary font-semibold">{detail.caseId}</div>
-                                    <h1 className="text-xl font-bold text-white mt-1">{detail.threatType}</h1>
+                                    <h1 className="text-xl font-bold text-text mt-1">{detail.threatType}</h1>
                                     <div className="text-text-muted text-sm mt-2 space-y-1">
                                         {detail.location?.address && (
                                             <div className="flex items-center gap-1.5">
@@ -296,11 +296,11 @@ const RangerMissionDetail = () => {
                                         )}
                                         <div>
                                             Case status:{' '}
-                                            <span className="text-white font-medium">{detail.status}</span>
+                                            <span className="text-text font-medium">{detail.status}</span>
                                         </div>
                                         <div>
                                             Ranger status:{' '}
-                                            <span className="text-white font-medium">
+                                            <span className="text-text font-medium">
                                                 {detail.rangerStatus?.replace(/_/g, ' ')}
                                             </span>
                                         </div>
@@ -323,7 +323,7 @@ const RangerMissionDetail = () => {
                             className="bg-white rounded-3xl p-8 mb-8 border border-border shadow-premium animate-fade-in scroll-mt-28"
                         >
                             <div className="flex items-center justify-between gap-4 mb-4">
-                                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <ListChecks className="text-primary" size={22} />
                                     Suggested actions
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-primary/90 ml-1">
@@ -358,8 +358,8 @@ const RangerMissionDetail = () => {
                             )}
                         </div>
 
-                        <div className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80">
-                            <h2 className="text-lg font-bold text-white mb-4">Mission workflow</h2>
+                        <div className="bg-white rounded-3xl p-8 border border-border shadow-premium mb-8">
+                            <h2 className="text-lg font-bold text-text mb-4">Mission workflow</h2>
                             {missionActions}
                             {['DECLINED', 'CLOSED'].includes(rangerStatus) && (
                                 <p className="text-text-muted text-sm">
@@ -370,8 +370,8 @@ const RangerMissionDetail = () => {
                         </div>
 
                         {['ON_SITE', 'ACTION_TAKEN'].includes(rangerStatus) && (
-                            <div className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80">
-                                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <div className="bg-white rounded-3xl p-8 border border-border shadow-premium mb-8">
+                                <h2 className="text-lg font-bold text-text mb-4 flex items-center gap-2">
                                     <Camera size={22} className="text-primary" />
                                     Evidence
                                 </h2>
@@ -394,7 +394,7 @@ const RangerMissionDetail = () => {
                                     <div className="form-group">
                                         <label className="text-xs text-text-muted">Description</label>
                                         <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm"
                                             value={evidenceForm.description}
                                             onChange={(e) =>
                                                 setEvidenceForm((f) => ({ ...f, description: e.target.value }))
@@ -404,7 +404,7 @@ const RangerMissionDetail = () => {
                                     <div className="form-group">
                                         <label className="text-xs text-text-muted">Notes</label>
                                         <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm"
                                             value={evidenceForm.notes}
                                             onChange={(e) =>
                                                 setEvidenceForm((f) => ({ ...f, notes: e.target.value }))
@@ -414,7 +414,7 @@ const RangerMissionDetail = () => {
                                     <div className="form-group sm:col-span-2">
                                         <label className="text-xs text-text-muted">Condition summary</label>
                                         <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm"
                                             value={evidenceForm.conditionSummary}
                                             onChange={(e) =>
                                                 setEvidenceForm((f) => ({ ...f, conditionSummary: e.target.value }))
@@ -424,7 +424,7 @@ const RangerMissionDetail = () => {
                                     <div className="form-group">
                                         <label className="text-xs text-text-muted">GPS lat</label>
                                         <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm"
                                             value={evidenceForm.gpsLat}
                                             onChange={(e) =>
                                                 setEvidenceForm((f) => ({ ...f, gpsLat: e.target.value }))
@@ -434,7 +434,7 @@ const RangerMissionDetail = () => {
                                     <div className="form-group">
                                         <label className="text-xs text-text-muted">GPS lng</label>
                                         <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm"
                                             value={evidenceForm.gpsLng}
                                             onChange={(e) =>
                                                 setEvidenceForm((f) => ({ ...f, gpsLng: e.target.value }))
@@ -465,7 +465,7 @@ const RangerMissionDetail = () => {
                                                     className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border bg-surface/40 p-3"
                                                 >
                                                     <div className="text-sm min-w-0">
-                                                        <div className="text-white font-medium">
+                                                        <div className="text-text font-medium">
                                                             {ev.evidenceType}{' '}
                                                             <span className="text-text-muted font-normal">
                                                                 {ev.url === 'text-report' ? '(text)' : ''}
@@ -511,8 +511,8 @@ const RangerMissionDetail = () => {
                         )}
 
                         {['ON_SITE', 'ACTION_TAKEN'].includes(rangerStatus) && (
-                            <div className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80">
-                                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <div className="bg-white rounded-3xl p-8 border border-border shadow-premium mb-8">
+                                <h2 className="text-lg font-bold text-text mb-4 flex items-center gap-2">
                                     <CheckCircle2 className="text-primary" size={22} />
                                     Close case
                                 </h2>
@@ -521,7 +521,7 @@ const RangerMissionDetail = () => {
                                         <label className="text-xs text-text-muted">Action taken *</label>
                                         <textarea
                                             required
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm min-h-[80px]"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm min-h-[80px]"
                                             value={closeForm.actionTaken}
                                             onChange={(e) =>
                                                 setCloseForm((f) => ({ ...f, actionTaken: e.target.value }))
@@ -532,7 +532,7 @@ const RangerMissionDetail = () => {
                                         <label className="text-xs text-text-muted">Solution provided *</label>
                                         <textarea
                                             required
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm min-h-[80px]"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm min-h-[80px]"
                                             value={closeForm.solutionProvided}
                                             onChange={(e) =>
                                                 setCloseForm((f) => ({ ...f, solutionProvided: e.target.value }))
@@ -544,7 +544,7 @@ const RangerMissionDetail = () => {
                                             Proof URLs (comma or newline separated)
                                         </label>
                                         <textarea
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm min-h-[64px]"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm min-h-[64px]"
                                             value={closeForm.proofUrls}
                                             onChange={(e) =>
                                                 setCloseForm((f) => ({ ...f, proofUrls: e.target.value }))
@@ -555,7 +555,7 @@ const RangerMissionDetail = () => {
                                         <label className="text-xs text-text-muted">Resolution date/time (optional)</label>
                                         <input
                                             type="datetime-local"
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
+                                            className="w-full rounded-lg bg-surface border border-border text-text px-3 py-2 text-sm"
                                             value={closeForm.dateTime}
                                             onChange={(e) =>
                                                 setCloseForm((f) => ({ ...f, dateTime: e.target.value }))
@@ -587,8 +587,8 @@ const RangerMissionDetail = () => {
                         )}
 
                         {detail.rangerStatusHistory?.length > 0 && (
-                            <div className="glass-morphism rounded-2xl p-6 border border-border/80">
-                                <h2 className="text-lg font-bold text-white mb-4">Status history</h2>
+                            <div className="bg-white rounded-3xl p-8 border border-border shadow-premium">
+                                <h2 className="text-lg font-bold text-text mb-4">Status history</h2>
                                 <ul className="space-y-3 text-sm">
                                     {[...detail.rangerStatusHistory]
                                         .slice()
@@ -598,7 +598,7 @@ const RangerMissionDetail = () => {
                                                 key={`${h.changedAt}-${idx}`}
                                                 className="flex justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0"
                                             >
-                                                <span className="text-white font-medium">
+                                                <span className="text-text font-medium">
                                                     {h.status?.replace(/_/g, ' ')}
                                                 </span>
                                                 <span className="text-text-muted shrink-0">

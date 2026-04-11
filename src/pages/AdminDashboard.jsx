@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
+
 import { 
     Activity, Shield, Users, Package, 
     AlertTriangle, TrendingUp, Search, Filter,
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-surface pb-16">
-            <Navbar />
+            
 
             <main className="max-w-7xl mx-auto px-6 mt-24 animate-fade-in">
                 {/* Header Area */}

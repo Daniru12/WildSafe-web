@@ -24,10 +24,10 @@ const Profile = () => {
                             <div className="relative w-32 h-32 mx-auto mb-6">
                                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/40 transition-all duration-500" />
                                 <div className="relative w-full h-full bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center border-4 border-surface shadow-premium">
-                                    <User size={64} className="text-white" />
+                                    <User size={64} className="text-text" />
                                 </div>
                             </div>
-                            <h2 className="text-3xl font-bold text-white mb-1">{user.name}</h2>
+                            <h2 className="text-3xl font-bold text-text mb-1">{user.name}</h2>
                             <p className="text-primary font-bold text-sm tracking-widest uppercase mb-6">{user.role} MEMBER</p>
                             <div className="flex justify-center gap-3">
                                 <span className="status-badge status-green">Verified</span>
@@ -36,7 +36,7 @@ const Profile = () => {
                         </div>
 
                         <div className="premium-card space-y-6">
-                            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                            <h3 className="text-xl font-bold text-text flex items-center gap-3">
                                 <div className="p-2 bg-primary/10 rounded-lg">
                                     <Shield size={20} className="text-primary" />
                                 </div>
@@ -47,14 +47,14 @@ const Profile = () => {
                                     <Mail className="text-text-muted mt-1" size={18} />
                                     <div>
                                         <div className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">Email Address</div>
-                                        <div className="text-white font-medium">{user.email}</div>
+                                        <div className="text-text font-medium">{user.email}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4 p-4 bg-surface-light/30 rounded-xl border border-white/5">
                                     <Wallet className="text-text-muted mt-1" size={18} />
                                     <div>
                                         <div className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">Wallet Identity</div>
-                                        <div className="text-white font-mono text-xs">0x71C...492b</div>
+                                        <div className="text-text font-mono text-xs">0x71C...492b</div>
                                     </div>
                                 </div>
                             </div>
@@ -79,20 +79,20 @@ const Profile = () => {
                                         <div className="p-3 bg-surface-light rounded-2xl border border-white/5">{stat.icon}</div>
                                         <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg">{stat.trend}</span>
                                     </div>
-                                    <div className="text-3xl font-bold text-white mb-1 tracking-tight">{stat.value}</div>
+                                    <div className="text-3xl font-bold text-text mb-1 tracking-tight">{stat.value}</div>
                                     <div className="text-sm text-text-muted font-medium">{stat.label}</div>
                                 </div>
                             ))}
                         </div>
 
                         {/* Holdings Table */}
-                        <div className="premium-card p-0 overflow-hidden">
+                        <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                             <div className="p-8 pb-4 flex justify-between items-center">
                                 <div>
-                                    <h3 className="text-2xl font-bold text-white mb-1">Your WildAssets</h3>
+                                    <h3 className="text-2xl font-bold text-text mb-1">Your WildAssets</h3>
                                     <p className="text-sm text-text-muted">Managed fractional wildlife tokens</p>
                                 </div>
-                                <button className="text-sm text-primary font-bold hover:text-white transition-colors">Explorer All Items</button>
+                                <button className="text-sm text-primary font-bold hover:text-text transition-colors">Explorer All Items</button>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
@@ -112,10 +112,10 @@ const Profile = () => {
                                         ].map((asset, i) => (
                                             <tr key={i} className="group hover:bg-white/[0.03] transition-colors">
                                                 <td className="px-8 py-6">
-                                                    <div className="text-white font-bold group-hover:text-primary transition-colors">{asset.name}</div>
+                                                    <div className="text-text font-bold group-hover:text-primary transition-colors">{asset.name}</div>
                                                 </td>
                                                 <td className="px-8 py-6 text-text-muted font-medium">{asset.share}</td>
-                                                <td className="px-8 py-6 text-white font-bold">{asset.value}</td>
+                                                <td className="px-8 py-6 text-text font-bold">{asset.value}</td>
                                                 <td className="px-8 py-6 text-right">
                                                     <span className={`status-badge ${asset.color}`}>
                                                         {asset.status}
@@ -130,7 +130,7 @@ const Profile = () => {
 
                         {/* Recent Activity */}
                         <div className="premium-card">
-                            <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                            <h3 className="text-2xl font-bold text-text mb-8 flex items-center gap-3">
                                 <div className="p-2 bg-secondary/10 rounded-lg">
                                     <History size={20} className="text-secondary" />
                                 </div>
@@ -148,7 +148,7 @@ const Profile = () => {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start mb-1">
-                                                <div className="text-white font-bold">{item.action}</div>
+                                                <div className="text-text font-bold">{item.action}</div>
                                                 <div className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{item.date}</div>
                                             </div>
                                             <div className="text-sm text-text-muted leading-relaxed font-medium">{item.detail}</div>

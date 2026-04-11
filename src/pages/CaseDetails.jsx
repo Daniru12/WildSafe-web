@@ -205,7 +205,7 @@ const CaseDetails = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
                             {/* Basic Information */}
-                            <section className="p-6 glass-morphism">
+                            <section className="p-8 bg-white rounded-[32px] border border-border shadow-premium transition-all hover:shadow-2xl">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                     <FileText size={20} />
                                     Basic Information
@@ -230,7 +230,7 @@ const CaseDetails = () => {
                             </section>
 
                             {/* Location */}
-                            <section className="p-6 glass-morphism">
+                            <section className="p-8 bg-white rounded-[32px] border border-border shadow-premium transition-all hover:shadow-2xl">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                     <MapPin size={20} />
                                     Location

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Archive, Check, Edit2, Loader2, Plus, Sparkles, UserCog, X, Package, Shield, Activity, MapPin, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import { useAuth } from '../context/AuthContext';
 import aiService from '../services/aiService';
@@ -270,7 +270,7 @@ function ResourceManagement() {
 
   return (
     <div className="min-h-screen bg-surface pb-16">
-      <Navbar />
+      
 
       {toast && (
         <div className={`fixed right-6 top-6 z-50 rounded-2xl px-6 py-4 text-sm font-bold text-white shadow-2xl animate-fade-in ${toast.type === 'error' ? 'bg-red-500' : 'bg-primary'}`}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
+
 import api from '../utils/api';
 import {
     Users, Search, Filter, Mail, Shield, Calendar,
@@ -65,7 +65,7 @@ const UserManagement = () => {
 
     return (
         <div className="min-h-screen bg-surface pb-16">
-            <Navbar />
+            
 
             {/* Toast */}
             {toast && (

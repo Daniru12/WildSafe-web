@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Edit2, Loader2, Plus, Search, Shield, Trash2, UserPlus, Users, X, Activity, Briefcase, Mail, Phone, Lock } from 'lucide-react';
-import Navbar from '../components/Navbar';
+
 import api from '../utils/api';
 
 const DEPARTMENTS = ['PATROL', 'INVESTIGATION', 'ADMINISTRATION', 'WILDLIFE_RESCUE', 'ANALYTICS'];
@@ -165,7 +165,7 @@ function StaffManagement() {
 
   return (
     <div className="min-h-screen bg-surface pb-16">
-      <Navbar />
+      
 
       {toast && (
         <div className={`fixed right-6 top-6 z-50 rounded-2xl px-6 py-4 text-sm font-bold text-white shadow-2xl animate-fade-in ${toast.type === 'error' ? 'bg-red-500' : 'bg-primary'}`}>

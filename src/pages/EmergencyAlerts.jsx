@@ -218,22 +218,22 @@ const EmergencyAlerts = () => {
 
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div className="p-6 glass-morphism">
+                        <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                             <p className="text-sm text-text-muted">Total Alerts</p>
                             <p className="text-2xl font-bold">{stats.totalAlerts || 0}</p>
                         </div>
-                        <div className="p-6 glass-morphism">
+                        <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                             <p className="text-sm text-text-muted">Active Alerts</p>
-                            <p className="text-2xl font-bold text-amber-300">{stats.activeAlerts || 0}</p>
+                            <p className="text-2xl font-bold text-amber-700">{stats.activeAlerts || 0}</p>
                         </div>
-                        <div className="p-6 glass-morphism">
+                        <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                             <p className="text-sm text-text-muted">Urgent Alerts</p>
-                            <p className="text-2xl font-bold text-red-300">{stats.urgentAlerts || 0}</p>
+                            <p className="text-2xl font-bold text-red-600">{stats.urgentAlerts || 0}</p>
                         </div>
                     </div>
                 )}
 
-                <section className="glass-morphism p-6 mb-8">
+                <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                     <h2 className="text-xl font-semibold mb-4">Send Emergency Alert</h2>
                     <form onSubmit={handleSendEmergency} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
@@ -286,7 +286,7 @@ const EmergencyAlerts = () => {
                             {loadingAwareness ? (
                                 <div className="p-3 rounded-lg border border-border bg-surface-light text-sm text-text-muted">Loading awareness guidelines...</div>
                             ) : relevantAwareness.length === 0 ? (
-                                <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-sm text-amber-300">
+                                <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-sm text-amber-700">
                                     No awareness guidelines are configured for type: {formData.alertType}. Create awareness content with this trigger first.
                                 </div>
                             ) : (
@@ -304,7 +304,7 @@ const EmergencyAlerts = () => {
                                                 />
                                                 <div>
                                                     <p className="text-sm font-medium">{item.title}</p>
-                                                    <p className="text-xs text-amber-300 uppercase mt-1">{item.category}</p>
+                                                    <p className="text-xs text-amber-700 uppercase mt-1">{item.category}</p>
                                                     <p className="text-xs text-text-muted mt-2">{item.content}</p>
                                                 </div>
                                             </label>
@@ -352,7 +352,7 @@ const EmergencyAlerts = () => {
                                     Lat: {position.lat.toFixed(6)}, Lng: {position.lng.toFixed(6)}
                                 </div>
                             ) : (
-                                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm text-amber-300">
+                                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm text-amber-700">
                                     Select a location point before sending.
                                 </div>
                             )}
@@ -369,7 +369,7 @@ const EmergencyAlerts = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            {error && <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300">{error}</div>}
+                            {error && <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600">{error}</div>}
                             <button type="submit" className="btn-primary flex items-center gap-2" disabled={sending}>
                                 <Send size={16} />
                                 {sending ? 'Sending...' : 'Send Emergency Alert'}
@@ -379,7 +379,7 @@ const EmergencyAlerts = () => {
                 </section>
 
                 {sendResult && (
-                    <section className="glass-morphism p-6 mb-8">
+                    <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                         <h2 className="text-xl font-semibold mb-4">Delivery Summary</h2>
                         <p className="text-sm text-text-muted mb-3">{sendResult.message}</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -392,7 +392,7 @@ const EmergencyAlerts = () => {
                                 <div className="text-xl font-semibold">{sendResult.whatsappDelivery?.sent || 0}</div>
                             </div>
                             <div className="p-4 bg-surface rounded-lg">
-                                <div className="flex items-center gap-2 text-red-300 mb-1"><XCircle size={14} /> WhatsApp Failed</div>
+                                <div className="flex items-center gap-2 text-red-600 mb-1"><XCircle size={14} /> WhatsApp Failed</div>
                                 <div className="text-xl font-semibold">{sendResult.whatsappDelivery?.failed || 0}</div>
                             </div>
                         </div>
@@ -404,7 +404,7 @@ const EmergencyAlerts = () => {
                                     {sendResult.awarenessGuidelines.map((item) => (
                                         <div key={item._id || item.id} className="p-3 rounded-lg border border-border bg-surface-light">
                                             <div className="text-sm font-medium">{item.title}</div>
-                                            <div className="text-xs text-amber-300 uppercase mt-1">{item.category}</div>
+                                            <div className="text-xs text-amber-700 uppercase mt-1">{item.category}</div>
                                             <p className="text-xs text-text-muted mt-2 line-clamp-3">{item.content}</p>
                                         </div>
                                     ))}
@@ -443,7 +443,7 @@ const EmergencyAlerts = () => {
                                     {(alert.alertType || alert.relatedAwareness?.length > 0) && (
                                         <div className="mt-3 p-3 rounded-lg bg-surface-light border border-border">
                                             <p className="text-xs text-text-muted mb-2">
-                                                Type: <span className="text-amber-300 uppercase">{alert.alertType || 'general'}</span>
+                                                Type: <span className="text-amber-700 uppercase">{alert.alertType || 'general'}</span>
                                             </p>
                                             {alert.relatedAwareness?.length ? (
                                                 <div className="flex flex-wrap gap-2">
