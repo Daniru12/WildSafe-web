@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { 
@@ -298,7 +298,7 @@ const CaseManagement = () => {
     if (loading) {
         return (
             <div className="min-h-screen pb-16">
-                <Navbar />
+                
                 <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                     <div className="flex items-center justify-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -310,7 +310,7 @@ const CaseManagement = () => {
 
     return (
         <div className="min-h-screen pb-16">
-            <Navbar />
+            
             <main className={`max-w-7xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
@@ -330,7 +330,7 @@ const CaseManagement = () => {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div className="p-6 glass-morphism">
+                    <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-text-muted">Total Cases</p>
@@ -340,7 +340,7 @@ const CaseManagement = () => {
                         </div>
                     </div>
 
-                    <div className="p-6 glass-morphism">
+                    <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-text-muted">New Cases</p>
@@ -350,7 +350,7 @@ const CaseManagement = () => {
                         </div>
                     </div>
 
-                    <div className="p-6 glass-morphism">
+                    <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-text-muted">In Progress</p>
@@ -360,7 +360,7 @@ const CaseManagement = () => {
                         </div>
                     </div>
 
-                    <div className="p-6 glass-morphism">
+                    <div className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-text-muted">Resolved</p>
@@ -372,7 +372,7 @@ const CaseManagement = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="p-6 glass-morphism mb-8">
+                <div className="bg-white rounded-[32px] border border-border shadow-premium p-8 mb-8">
                     <div className="flex items-center gap-3 mb-4">
                         <Filter size={20} className="text-primary" />
                         <h3 className="text-lg font-semibold">Filters</h3>

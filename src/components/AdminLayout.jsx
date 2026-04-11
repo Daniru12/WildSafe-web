@@ -6,6 +6,7 @@ import {
     LayoutDashboard,
     Shield,
     BarChart3,
+    AlertTriangle,
     Package,
     Users,
     LogOut,
@@ -19,14 +20,17 @@ import {
 import NotificationDropdown from './NotificationDropdown';
 
 const adminNavItems = [
-    { label: 'Overview', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Citizen Registry', to: '/users', icon: Users },
-    { label: 'Case Control', to: '/case-management', icon: Shield },
+
+
+    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+    { label: 'Users', to: '/users', icon: Users },
+    { label: 'Case Management', to: '/case-management', icon: Shield },
     { label: 'Ranger Missions', to: '/ranger-missions', icon: Navigation2, matchPrefix: true },
     { label: 'Groq AI steps', to: '/ranger-ai-steps', icon: Sparkles, matchPrefix: true },
-    { label: 'Data Intelligence', to: '/analytics', icon: BarChart3 },
-    { label: 'Asset Logistics', to: '/resources', icon: Package },
-    { label: 'Field Staff', to: '/staff', icon: Users },
+    { label: 'Alerts', to: '/alerts', icon: AlertTriangle },
+    { label: 'Analytics', to: '/analytics', icon: BarChart3 },
+    { label: 'Resources', to: '/resources', icon: Package },
+    { label: 'Staff', to: '/staff', icon: Users },
 ];
 
 const AdminLayout = ({ children }) => {
@@ -53,12 +57,12 @@ const AdminLayout = ({ children }) => {
             >
                 {/* Logo Section */}
                 <div className="flex items-center gap-4 px-6 h-24 shrink-0 overflow-hidden">
-                    <div className="p-2.5 bg-primary/10 rounded-2xl border border-primary/20 shadow-premium group cursor-pointer">
-                        <Globe className="text-primary group-hover:rotate-180 transition-transform duration-700" size={28} />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                        <img src="/favicon.svg" alt="WildSafe" className="w-10 h-10 object-contain" />
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col animate-fade-in">
-                            <span className="text-2xl font-black text-white tracking-tighter leading-none">
+                            <span className="text-2xl font-black text-text tracking-tighter leading-none">
                                 Wild<span className="text-primary">Safe</span>
                             </span>
                             <span className="text-[10px] text-primary font-bold uppercase tracking-[0.2em] mt-1">Admin Command</span>
@@ -87,7 +91,7 @@ const AdminLayout = ({ children }) => {
                                     transition-all duration-300 relative
                                     ${active
                                         ? 'bg-primary text-white shadow-premium'
-                                        : 'text-text-muted hover:bg-white/[0.03] hover:text-white'
+                                        : 'text-text-muted hover:bg-white/10 hover:text-primary'
                                     }
                                 `}
                             >
@@ -102,7 +106,7 @@ const AdminLayout = ({ children }) => {
                 </nav>
 
                 {/* Account & Footer Section */}
-                <div className="mt-auto px-4 py-8 space-y-4 border-t border-white/5 bg-black/20">
+                <div className="mt-auto px-4 py-8 space-y-4 border-t border-border bg-surface">
                     {/* User Profile Hook */}
                     <Link
                         to="/profile"
@@ -120,7 +124,7 @@ const AdminLayout = ({ children }) => {
                         </div>
                         {!collapsed && (
                             <div className="flex-1 min-w-0 animate-fade-in">
-                                <div className="text-sm font-bold text-white truncate leading-tight">{user?.name}</div>
+                                <div className="text-sm font-bold text-text truncate leading-tight">{user?.name}</div>
                                 <div className="text-[10px] text-primary font-bold uppercase tracking-widest mt-0.5">Systems Admin</div>
                             </div>
                         )}
@@ -163,7 +167,7 @@ const AdminLayout = ({ children }) => {
 
             {/* ── Main Dashboard Content ── */}
             <main
-                className={`flex-1 min-h-screen transition-all duration-500 ease-in-out ${collapsed ? 'ml-[88px]' : 'ml-72'} bg-[#060b18]`}
+                className={`flex-1 min-h-screen transition-all duration-500 ease-in-out ${collapsed ? 'ml-[88px]' : 'ml-72'} bg-surface`}
             >
                 <div className="p-8 animate-slide-up">
                     {children}
