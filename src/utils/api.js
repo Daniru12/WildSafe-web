@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://13.60.173.31:5000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.wildsafe.daniruranathunga.live/api';
 
 const api = axios.create({
     baseURL: BASE_URL,
