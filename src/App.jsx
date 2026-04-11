@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
@@ -8,12 +8,22 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CitizenDashboard from './pages/CitizenDashboard';
 import OfficerDashboard from './pages/OfficerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import ReportIncident from './pages/ReportIncident';
 import ThreatReport from './pages/ThreatReport';
 import CaseManagement from './pages/CaseManagement';
 import CaseDetails from './pages/CaseDetails';
+import RangerMissions from './pages/RangerMissions';
+import RangerMissionDetail from './pages/RangerMissionDetail';
+import RangerGroqAiHub from './pages/RangerGroqAiHub';
 import NotificationCenter from './pages/NotificationCenter';
 import Analytics from './pages/Analytics';
+import EmergencyAlerts from './pages/EmergencyAlerts';
+import StaffManagement from './pages/StaffManagement';
+import ResourceManagement from './pages/ResourceManagement';
+import AiInsights from './pages/AiInsights';
+import UserManagement from './pages/UserManagement';
+import AdminLayout from './components/AdminLayout';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, roles }) => {
@@ -32,10 +42,26 @@ const ProtectedRoute = ({ children, roles }) => {
   return children;
 };
 
-// Role-based Dashboard Switcher
+// Admin Role Wrapper for Layout
+const RoleBasedLayout = ({ children }) => {
+  const { user } = useAuth();
+  if (user?.role === 'ADMIN') {
+    return <AdminLayout>{children}</AdminLayout>;
+  }
+  return children;
+};
+
+// Role-based Dashboard Switcher — ADMIN: command center + sidebar; OFFICER: ranger-focused home (navbar).
 const DashboardSelector = () => {
   const { user } = useAuth();
-  if (['OFFICER', 'ADMIN'].includes(user.role)) {
+  if (user?.role === 'ADMIN') {
+    return (
+      <RoleBasedLayout>
+        <AdminDashboard />
+      </RoleBasedLayout>
+    );
+  }
+  if (user?.role === 'OFFICER') {
     return <OfficerDashboard />;
   }
   return <CitizenDashboard />;
@@ -64,7 +90,9 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <Profile />
+                <RoleBasedLayout>
+                  <Profile />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -91,7 +119,20 @@ function App() {
             path="/analytics"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <Analytics />
+                <RoleBasedLayout>
+                  <Analytics />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <EmergencyAlerts />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -101,7 +142,9 @@ function App() {
             path="/case-management"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <CaseManagement />
+                <RoleBasedLayout>
+                  <CaseManagement />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -110,7 +153,42 @@ function App() {
             path="/cases/:caseId"
             element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <CaseDetails />
+                <RoleBasedLayout>
+                  <CaseDetails />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ranger-missions"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <RangerMissions />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ranger-missions/:caseId"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <RangerMissionDetail />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ranger-ai-steps"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <RangerGroqAiHub />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -118,8 +196,54 @@ function App() {
           <Route
             path="/notifications"
             element={
+              <ProtectedRoute roles={['CITIZEN', 'OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <NotificationCenter />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/staff"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <RoleBasedLayout>
+                  <StaffManagement />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <RoleBasedLayout>
+                  <UserManagement />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+                    <Route
+            path="/resources"
+            element={
               <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
-                <NotificationCenter />
+                <RoleBasedLayout>
+                  <ResourceManagement />
+                </RoleBasedLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ai-insights"
+            element={
+              <ProtectedRoute roles={['OFFICER', 'ADMIN']}>
+                <RoleBasedLayout>
+                  <AiInsights />
+                </RoleBasedLayout>
               </ProtectedRoute>
             }
           />
@@ -133,3 +257,4 @@ function App() {
 }
 
 export default App;
+

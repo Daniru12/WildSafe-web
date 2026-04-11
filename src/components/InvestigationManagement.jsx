@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { 
   Plus, 
@@ -34,13 +33,8 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
     const [evidenceFiles, setEvidenceFiles] = useState([]);
     const [evidenceDescription, setEvidenceDescription] = useState('');
 
-    useEffect(() => {
-        if (caseId) {
-            fetchInvestigation();
-        }
-    }, [caseId]);
-
-    const fetchInvestigation = async () => {
+    const fetchInvestigation = useCallback(async () => {
+        if (!caseId) return;
         try {
             const response = await api.get(`/cases/${caseId}`);
             setInvestigation(response.data.investigation || {
@@ -51,7 +45,11 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
         } catch (err) {
             console.error('Error fetching investigation:', err);
         }
-    };
+    }, [caseId]);
+
+    useEffect(() => {
+        fetchInvestigation();
+    }, [fetchInvestigation]);
 
     const handleAddFinding = async () => {
         if (!newFinding.trim()) {
@@ -186,7 +184,7 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
             )}
 
             {/* Investigation Findings */}
-            <section className="p-6 glass-morphism">
+            <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                     <FileText size={20} />
                     Investigation Findings
@@ -241,7 +239,7 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
             </section>
 
             {/* Actions Taken */}
-            <section className="p-6 glass-morphism">
+            <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                     <Flag size={20} />
                     Actions Taken
@@ -308,7 +306,7 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
             </section>
 
             {/* Evidence Management */}
-            <section className="p-6 glass-morphism">
+            <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                     <Camera size={20} />
                     Evidence Management

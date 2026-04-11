@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import Navbar from '../components/Navbar';
+import ImageUpload from '../components/ImageUpload';
 import api from '../utils/api';
 import { Send, Camera, MapPin, AlertCircle } from 'lucide-react';
 
@@ -40,6 +41,22 @@ const ReportIncident = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setPosition({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    });
+                },
+                (err) => {
+                    console.error('Error getting location:', err);
+                }
+            );
+        }
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!position) {
@@ -50,14 +67,27 @@ const ReportIncident = () => {
         setIsSubmitting(true);
         setError(null);
         try {
-            await api.post('/incidents', {
-                ...formData,
-                location: {
-                    lat: position.lat,
-                    lng: position.lng,
-                    address: 'Selected Location'
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('category', formData.category);
+            formDataToSend.append('location', JSON.stringify({
+                lat: position.lat,
+                lng: position.lng,
+                address: 'Selected Location'
+            }));
+
+            // Append images if any
+            photos.forEach((photo) => {
+                if (typeof photo !== 'string') {
+                    formDataToSend.append('images', photo);
+                }
+            });
+
+            await api.post('/incidents', formDataToSend, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
                 },
-                photos: photos
             });
             navigate('/dashboard');
         } catch (err) {
@@ -121,12 +151,11 @@ const ReportIncident = () => {
 
                         <section className="p-8 glass-morphism">
                             <h3 className="flex items-center gap-3 mb-6 text-primary text-xl font-bold"><Camera size={20} /> Media Upload (Optional)</h3>
-                            <div className="border-2 border-dashed border-border rounded-2xl p-12 text-center text-text-muted transition-all hover:border-primary hover:bg-primary/5 cursor-pointer">
-                                <Camera size={32} className="mx-auto mb-4" />
-                                <p>Drag and drop or click to upload photos</p>
-                                <input type="file" className="hidden" multiple disabled />
-                            </div>
-                            <p className="mt-4 text-xs italic text-text-muted text-center">Photo upload is a placeholder for this demo.</p>
+                            <ImageUpload 
+                                images={photos} 
+                                onChange={setPhotos} 
+                                maxImages={5} 
+                            />
                         </section>
                     </div>
 
@@ -135,7 +164,7 @@ const ReportIncident = () => {
                             <h3 className="flex items-center gap-3 mb-4 text-primary text-xl font-bold"><MapPin size={20} /> Incident Location</h3>
                             <p className="text-sm text-text-muted mb-4">Click on the map to mark the exact location.</p>
                             <div className="rounded-2xl overflow-hidden border border-border mb-4 flex-grow relative">
-                                <MapContainer center={[7.8731, 80.7718]} zoom={7} scrollWheelZoom={true} style={{ height: '100%', minHeight: '350px', width: '100%' }}>
+                                <MapContainer center={position ? [position.lat, position.lng] : [7.8731, 80.7718]} zoom={position ? 13 : 7} scrollWheelZoom={true} style={{ height: '100%', minHeight: '350px', width: '100%' }}>
                                     <TileLayer
                                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
