@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -49,6 +49,22 @@ const ThreatReport = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setPosition({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    });
+                },
+                (err) => {
+                    console.error('Error getting location:', err);
+                }
+            );
+        }
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!position) {
@@ -73,12 +89,12 @@ const ThreatReport = () => {
                     address: address || 'Selected Location'
                 },
                 media: media.map(file => ({
-                    type: file.type.startsWith('image/') ? 'IMAGE' : 'VIDEO',
-                    url: file.url || URL.createObjectURL(file)
+                    url: file.url || URL.createObjectURL(file),
+                    mediaType: file.type.startsWith('image/') ? 'IMAGE' : 'VIDEO'
                 }))
             };
 
-            const response = await api.post('/threat-reports', reportData);
+            await api.post('/threat-reports', reportData);
             
             setSuccess(true);
             setTimeout(() => {
@@ -327,8 +343,8 @@ const ThreatReport = () => {
                             
                             <div className="rounded-2xl overflow-hidden border border-border mb-4 flex-grow relative">
                                 <MapContainer
-                                    center={[7.8731, 80.7718]}
-                                    zoom={7}
+                                    center={position ? [position.lat, position.lng] : [7.8731, 80.7718]}
+                                    zoom={position ? 13 : 7}
                                     scrollWheelZoom={true}
                                     style={{ height: '400px', width: '100%' }}
                                 >

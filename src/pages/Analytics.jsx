@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
+import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { Download, BarChart2, PieChart as PieChartIcon, TrendingUp, MapPin, Clock, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#5EB946', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const Analytics = () => {
-    const [categoryData, setCategoryData] = useState([]);
-    const [statusData, setStatusData] = useState([]);
+    const navPt = useFixedNavOffsetClass();
     const [trendData, setTrendData] = useState([]);
     const [threatStats, setThreatStats] = useState({});
     const [caseStats, setCaseStats] = useState({});
@@ -17,11 +17,7 @@ const Analytics = () => {
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('30'); // days
 
-    useEffect(() => {
-        fetchAnalyticsData();
-    }, [timeRange]);
-
-    const fetchAnalyticsData = async () => {
+    const fetchAnalyticsData = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -42,15 +38,7 @@ const Analytics = () => {
                 resolutionTime: caseResponse.data.resolutionTime || null
             });
 
-            // Fetch legacy analytics for backward compatibility
-            const [catRes, statusRes, trendRes] = await Promise.all([
-                api.get('/analytics/incidents-by-category'),
-                api.get('/analytics/incidents-by-status'),
-                api.get('/analytics/trends')
-            ]);
-
-            setCategoryData(catRes.data);
-            setStatusData(statusRes.data);
+            const trendRes = await api.get('/analytics/trends');
 
             // Format trend data for chart
             const formattedTrends = trendRes.data.map(item => ({
@@ -85,7 +73,11 @@ const Analytics = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [timeRange]);
+
+    useEffect(() => {
+        fetchAnalyticsData();
+    }, [fetchAnalyticsData]);
 
     const formatThreatType = (type) => {
         return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
@@ -98,7 +90,7 @@ const Analytics = () => {
     if (loading) return (
         <div className="min-h-screen pb-16">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 mt-12">
+            <main className={`max-w-7xl mx-auto px-6 ${navPt || 'mt-12'}`}>
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
@@ -107,9 +99,9 @@ const Analytics = () => {
     );
 
     return (
-        <div className="min-h-screen pb-16 print:bg-white print:text-black">
+        <div className="min-h-screen pb-16 bg-surface print:bg-white print:text-black">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 mt-12 animate-fade-in">
+            <main className={`max-w-7xl mx-auto px-6 animate-fade-in ${navPt || 'mt-12'}`}>
                 <div className="flex justify-between items-center mb-10 print:hidden">
                     <div>
                         <h1 className="text-4xl font-bold mb-2">Wildlife Threat Analytics</h1>
@@ -135,56 +127,64 @@ const Analytics = () => {
 
                 {/* Key Metrics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div className="p-6 glass-morphism">
+                    <div className="p-6 bg-white border border-border rounded-3xl shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-text-muted">Total Threat Reports</p>
-                                <p className="text-2xl font-bold">{getTotalCount(threatStats.statusBreakdown)}</p>
+                                <p className="text-sm font-bold text-text-muted mb-1">Total Threat Reports</p>
+                                <p className="text-3xl font-black text-text">{getTotalCount(threatStats.statusBreakdown)}</p>
                             </div>
-                            <AlertTriangle className="text-orange-500" size={24} />
+                            <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center">
+                                <AlertTriangle className="text-orange-500" size={24} />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="p-6 glass-morphism">
+                    <div className="p-6 bg-white border border-border rounded-3xl shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-text-muted">Active Cases</p>
-                                <p className="text-2xl font-bold">
+                                <p className="text-sm font-bold text-text-muted mb-1">Active Cases</p>
+                                <p className="text-3xl font-black text-text">
                                     {caseStats.statusBreakdown?.find(s => s._id === 'IN_PROGRESS')?.count || 0}
                                 </p>
                             </div>
-                            <Clock className="text-blue-500" size={24} />
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                                <Clock className="text-blue-500" size={24} />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="p-6 glass-morphism">
+                    <div className="p-6 bg-white border border-border rounded-3xl shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-text-muted">Resolved Cases</p>
-                                <p className="text-2xl font-bold text-green-600">
+                                <p className="text-sm font-bold text-text-muted mb-1">Resolved Cases</p>
+                                <p className="text-3xl font-black text-primary">
                                     {caseStats.statusBreakdown?.find(s => s._id === 'RESOLVED')?.count || 0}
                                 </p>
                             </div>
-                            <CheckCircle className="text-green-500" size={24} />
+                            <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center">
+                                <CheckCircle className="text-primary" size={24} />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="p-6 glass-morphism">
+                    <div className="p-6 bg-white border border-border rounded-3xl shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-text-muted">Avg Resolution Time</p>
-                                <p className="text-2xl font-bold">
+                                <p className="text-sm font-bold text-text-muted mb-1">Avg Resolution Time</p>
+                                <p className="text-3xl font-black text-text">
                                     {caseStats.resolutionTime ? `${caseStats.resolutionTime.avgResolutionTime?.toFixed(1)}d` : 'N/A'}
                                 </p>
                             </div>
-                            <TrendingUp className="text-purple-500" size={24} />
+                            <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center">
+                                <TrendingUp className="text-purple-500" size={24} />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     {/* Threat Types Distribution */}
-                    <div className="p-8 glass-morphism print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
+                    <div className="p-8 bg-white border border-border rounded-3xl shadow-sm overflow-hidden print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
                         <h3 className="flex items-center gap-3 mb-8 text-text text-lg font-bold">
                             <BarChart2 size={20} className="text-primary" />
                             Threat Types Distribution
@@ -195,22 +195,22 @@ const Analytics = () => {
                                     category: formatThreatType(t._id), 
                                     count: t.count 
                                 })) || []}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                    <XAxis dataKey="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                                    <XAxis dataKey="category" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#f8fafc' }}
-                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px' }}
+                                        itemStyle={{ color: '#111827' }}
+                                        cursor={{ fill: 'rgba(94,185,70,0.05)' }}
                                     />
-                                    <Bar dataKey="count" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="count" fill="#5EB946" radius={[6, 6, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
 
                     {/* Case Status Distribution */}
-                    <div className="p-8 glass-morphism print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
+                    <div className="p-8 bg-white border border-border rounded-3xl shadow-sm overflow-hidden print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
                         <h3 className="flex items-center gap-3 mb-8 text-text text-lg font-bold">
                             <PieChartIcon size={20} className="text-primary" />
                             Case Status Distribution
@@ -226,18 +226,18 @@ const Analytics = () => {
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
+                                        outerRadius={90}
+                                        paddingAngle={8}
                                         dataKey="value"
                                         animationDuration={1500}
                                     >
                                         {(caseStats.statusBreakdown || []).map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.1)" />
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#f8fafc' }}
+                                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px' }}
+                                        itemStyle={{ color: '#111827' }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -247,7 +247,7 @@ const Analytics = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     {/* Geographic Distribution */}
-                    <div className="p-8 glass-morphism print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
+                    <div className="p-8 bg-white border border-border rounded-3xl shadow-sm overflow-hidden print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
                         <h3 className="flex items-center gap-3 mb-8 text-text text-lg font-bold">
                             <MapPin size={20} className="text-primary" />
                             Geographic Distribution
@@ -255,12 +255,12 @@ const Analytics = () => {
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={locationData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                    <XAxis dataKey="location" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                                    <XAxis dataKey="location" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#f8fafc' }}
+                                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px' }}
+                                        itemStyle={{ color: '#111827' }}
                                     />
                                     <Area type="monotone" dataKey="threats" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} />
                                     <Area type="monotone" dataKey="cases" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
@@ -270,7 +270,7 @@ const Analytics = () => {
                     </div>
 
                     {/* Response Time Trends */}
-                    <div className="p-8 glass-morphism print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
+                    <div className="p-8 bg-white border border-border rounded-3xl shadow-sm overflow-hidden print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
                         <h3 className="flex items-center gap-3 mb-8 text-text text-lg font-bold">
                             <Clock size={20} className="text-primary" />
                             Response Time Trends
@@ -278,19 +278,19 @@ const Analytics = () => {
                         <div className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={responseTimeData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                                    <XAxis dataKey="month" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#f8fafc' }}
+                                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px' }}
+                                        itemStyle={{ color: '#111827' }}
                                     />
                                     <Line
                                         type="monotone"
                                         dataKey="avgHours"
-                                        stroke="#10b981"
-                                        strokeWidth={3}
-                                        dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#0f172a' }}
+                                        stroke="#5EB946"
+                                        strokeWidth={4}
+                                        dot={{ r: 6, fill: '#5EB946', strokeWidth: 2, stroke: '#ffffff' }}
                                         name="Average Response Time"
                                     />
                                     <Line
@@ -309,7 +309,7 @@ const Analytics = () => {
                 </div>
 
                 {/* Incident Trends (Legacy) */}
-                <div className="p-8 glass-morphism md:col-span-2 print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
+                <div className="p-8 bg-white border border-border rounded-3xl shadow-sm overflow-hidden md:col-span-2 print:mb-8 print:border print:border-slate-200 print:bg-white print:shadow-none print:break-inside-avoid">
                     <h3 className="flex items-center gap-3 mb-8 text-text text-lg font-bold">
                         <TrendingUp size={20} className="text-primary" />
                         Historical Incident Trends
@@ -317,20 +317,20 @@ const Analytics = () => {
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={trendData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                                <XAxis dataKey="name" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                    itemStyle={{ color: '#f8fafc' }}
+                                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px' }}
+                                    itemStyle={{ color: '#111827' }}
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="count"
                                     stroke="#8b5cf6"
-                                    strokeWidth={3}
-                                    dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 2, stroke: '#0f172a' }}
-                                    activeDot={{ r: 8, stroke: '#8b5cf6', strokeWidth: 2, fill: '#f8fafc' }}
+                                    strokeWidth={4}
+                                    dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 2, stroke: '#ffffff' }}
+                                    activeDot={{ r: 8, stroke: '#8b5cf6', strokeWidth: 2, fill: '#ffffff' }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
