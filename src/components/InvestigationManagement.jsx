@@ -184,7 +184,7 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
             )}
 
             {/* Investigation Findings */}
-            <section className="p-6 glass-morphism">
+            <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                     <FileText size={20} />
                     Investigation Findings
@@ -239,7 +239,7 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
             </section>
 
             {/* Actions Taken */}
-            <section className="p-6 glass-morphism">
+            <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                     <Flag size={20} />
                     Actions Taken
@@ -306,7 +306,7 @@ const InvestigationManagement = ({ caseId, onInvestigationUpdate }) => {
             </section>
 
             {/* Evidence Management */}
-            <section className="p-6 glass-morphism">
+            <section className="bg-white rounded-[32px] border border-border shadow-premium p-8">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                     <Camera size={20} />
                     Evidence Management
