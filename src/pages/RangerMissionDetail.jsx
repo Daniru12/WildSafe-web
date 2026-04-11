@@ -320,7 +320,7 @@ const RangerMissionDetail = () => {
 
                         <div
                             id="groq-suggested-steps"
-                            className="glass-morphism rounded-2xl p-6 mb-6 border border-border/80 scroll-mt-28"
+                            className="bg-white rounded-3xl p-8 mb-8 border border-border shadow-premium animate-fade-in scroll-mt-28"
                         >
                             <div className="flex items-center justify-between gap-4 mb-4">
                                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -348,7 +348,7 @@ const RangerMissionDetail = () => {
                             ) : suggestedActions.length === 0 ? (
                                 <p className="text-text-muted text-sm">No suggestions returned.</p>
                             ) : (
-                                <ol className="list-decimal list-inside space-y-2 text-sm text-slate-200">
+                                <ol className="list-decimal list-inside space-y-2 text-sm text-text">
                                     {suggestedActions.map((line, i) => (
                                         <li key={i} className="leading-relaxed">
                                             {line}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Activity, Bot, Loader2, Package, Search, Sparkles, UserCog, Zap } from 'lucide-react';
+import { Activity, Bot, Loader2, Package, Search, Sparkles, UserCog, Zap, Brain, Shield, Target, ArrowRight } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
 import api from '../utils/api';
@@ -121,176 +121,231 @@ function AiInsights() {
     }
   };
 
+  const tabs = [
+    { id: 'semantic', label: 'Semantic Discovery', icon: Search },
+    { id: 'assignment', label: 'Intelligent Assignment', icon: UserCog },
+    { id: 'action', label: 'Strategic Action', icon: Activity }
+  ];
+
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-screen bg-surface pb-16">
       <Navbar />
 
-      <main className={`mx-auto max-w-7xl px-6 ${navPt || 'mt-12'}`}>
-        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-4">
-            <Bot size={42} className="text-purple-300" />
-          </div>
+      <main className={`mx-auto max-w-7xl px-6 animate-fade-in ${navPt || 'mt-24'}`}>
+        <div className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-black">Cohere AI Insights</h1>
-            <p className="text-text-muted">Dedicated AI page for semantic search, smart staff assignment, and action suggestion.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-600 text-xs font-black uppercase tracking-widest mb-4">
+                <Brain size={14} />
+                Cognitive Intelligence
+            </div>
+            <h1 className="text-5xl font-black text-text tracking-tighter mb-2">AI <span className="text-purple-600">Insights</span> Hub</h1>
+            <p className="text-text-muted text-lg max-w-2xl font-medium">Leveraging state-of-the-art cohere models for operational optimization and strategic resource mapping.</p>
           </div>
         </div>
 
-        <div className="mb-8 flex flex-wrap gap-2">
-          {[
-            { id: 'semantic', label: 'Semantic Search', icon: Search },
-            { id: 'assignment', label: 'Staff Suggestion', icon: UserCog },
-            { id: 'action', label: 'Action Suggestion', icon: Activity }
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setTab(item.id)}
-              className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${tab === item.id ? 'bg-purple-600 text-white' : 'border border-white/10 bg-surface/30 text-text-muted hover:text-white'}`}
-            >
-              <span className="inline-flex items-center gap-2"><item.icon size={15} /> {item.label}</span>
-            </button>
-          ))}
+        {/* Tab Navigation */}
+        <div className="mb-10 flex items-center gap-2 p-2 bg-white rounded-[24px] border border-border w-fit shadow-premium">
+            {tabs.map(item => (
+                <button
+                    key={item.id}
+                    onClick={() => setTab(item.id)}
+                    className={`
+                        flex items-center gap-3 px-6 py-3 rounded-[18px] text-sm font-black tracking-tight transition-all
+                        ${tab === item.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-200 scale-105' : 'text-text-muted hover:bg-surface hover:text-text'}
+                    `}
+                >
+                    <item.icon size={18} />
+                    {item.label}
+                </button>
+            ))}
         </div>
 
-        <section className="glass-morphism rounded-2xl border border-white/10 p-6">
+        <section className="bg-white rounded-[40px] border border-border p-10 shadow-premium min-h-[600px] animate-slide-up">
           {tab === 'semantic' && (
-            <div>
-              <form onSubmit={runSemanticSearch} className="mb-6 flex items-center gap-2 rounded-xl border border-white/10 bg-surface/40 p-3">
-                <Sparkles size={16} className="text-purple-300" />
+            <div className="animate-fade-in">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-text mb-2">Discovery Engine</h2>
+                <p className="text-text-muted font-medium">Find specific tools and assets using natural language search.</p>
+              </div>
+
+              <form onSubmit={runSemanticSearch} className="mb-12 flex items-center gap-4 bg-surface rounded-3xl border border-border p-4 shadow-inner focus-within:border-purple-300 transition-all">
+                <div className="pl-2 text-purple-600">
+                    <Sparkles size={24} />
+                </div>
                 <input
-                  className="w-full bg-transparent outline-none"
-                  placeholder="Describe resource you need"
+                  className="flex-1 bg-transparent py-2 px-2 text-xl font-medium text-text outline-none placeholder:text-text-muted"
+                  placeholder="Ask for anything, e.g. 'unassigned drone in station alpha'"
                   value={semanticQuery}
                   onChange={(e) => setSemanticQuery(e.target.value)}
                 />
-                <button type="submit" disabled={semanticLoading} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                  {semanticLoading ? 'Searching...' : 'Search'}
+                <button type="submit" disabled={semanticLoading} className="bg-purple-600 px-8 py-4 rounded-2xl text-white font-black hover:translate-y-[-2px] transition-all disabled:opacity-50 shadow-lg shadow-purple-200">
+                  {semanticLoading ? <Loader2 className="animate-spin" size={24} /> : 'Search Universe'}
                 </button>
               </form>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {semanticResults.map((r) => (
-                  <article key={r._id} className="rounded-xl border border-white/10 bg-surface/30 p-4">
-                    <p className="text-xs uppercase tracking-wide text-text-muted">{(r.type || '').replace(/_/g, ' ')}</p>
-                    <h3 className="mt-1 text-lg font-bold">{r.metadata?.serialNumber || r.description || 'Resource'}</h3>
-                    <p className="mt-2 text-sm text-text-muted">{r.description || 'No description'}</p>
-                    <p className="mt-3 text-xs text-purple-300">Location: {r.metadata?.location || 'Unknown'}</p>
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {semanticResults.length > 0 ? semanticResults.map((r) => (
+                  <article key={r._id} className="group p-8 rounded-[32px] border border-border bg-white hover:border-purple-200 hover:shadow-2xl transition-all cursor-pointer">
+                    <div className="flex items-center justify-between mb-6">
+                        <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-[10px] font-black uppercase tracking-widest border border-purple-100">
+                            {(r.type || '').replace(/_/g, ' ')}
+                        </span>
+                        <Package size={18} className="text-text-muted group-hover:text-purple-600 transition-colors" />
+                    </div>
+                    <h3 className="text-xl font-black text-text leading-tight mb-4 group-hover:text-purple-600 transition-colors">{r.description || 'Verified Asset'}</h3>
+                    <div className="space-y-2 pt-4 border-t border-border">
+                        <p className="text-xs font-bold text-text-muted flex items-center gap-2">
+                             <Target size={14} className="text-purple-400" />
+                             Location: {r.metadata?.location || 'Operational Hub'}
+                        </p>
+                        <p className="text-xs font-bold text-text-muted flex items-center gap-2">
+                             <Shield size={14} className="text-purple-400" />
+                             Serial: {r.metadata?.serialNumber || 'N/A'}
+                        </p>
+                    </div>
                   </article>
-                ))}
-                {!semanticLoading && semanticQuery && semanticResults.length === 0 && (
-                  <p className="col-span-full text-sm text-text-muted">No semantic matches found.</p>
+                )) : semanticQuery && !semanticLoading && (
+                    <div className="col-span-full py-20 text-center">
+                         <Search size={48} className="mx-auto text-text-muted opacity-20 mb-4" />
+                         <p className="text-lg font-black text-text-muted">No cognitive matches found in local inventory.</p>
+                    </div>
                 )}
               </div>
             </div>
           )}
 
           {tab === 'assignment' && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {resources.map((r) => (
-                <article key={r._id} className="rounded-xl border border-white/10 bg-surface/30 p-4">
-                  <div className="mb-3 flex items-start justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-text-muted">{(r.type || '').replace(/_/g, ' ')}</p>
-                      <h3 className="text-lg font-bold">{r.description || 'Resource'}</h3>
-                    </div>
-                    <Package size={18} className="text-primary" />
-                  </div>
-                  <p className="mb-3 text-xs text-text-muted">Serial: {r.metadata?.serialNumber || 'N/A'}</p>
+            <div className="animate-fade-in">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-text mb-2">Resource Recommendations</h2>
+                <p className="text-text-muted font-medium">AI analysis for matching the right personnel to field assets.</p>
+              </div>
 
-                  <button
-                    onClick={() => getSuggestionForResource(r._id)}
-                    disabled={suggestingId !== null}
-                    className="mb-3 rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-3 py-2 text-sm font-semibold text-indigo-300 disabled:opacity-60"
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      {suggestingId === r._id ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
-                      Suggest Staff
-                    </span>
-                  </button>
-
-                  {suggestions[r._id] && (
-                    <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-3 text-sm text-text-muted">
-                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-indigo-300">AI Suggestion</p>
-                      <p>{typeof suggestions[r._id] === 'string' ? suggestions[r._id] : suggestions[r._id]?.reasoning || 'Suggestion generated'}</p>
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                {resources.length > 0 ? resources.map((r) => (
+                  <article key={r._id} className="p-8 rounded-[40px] border border-border bg-surface/30 hover:bg-white hover:border-primary/20 transition-all group">
+                    <div className="mb-8 flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-white border border-border flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform">
+                             <Package size={24} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">{(r.type || '').replace(/_/g, ' ')}</p>
+                          <h3 className="text-xl font-black text-text tracking-tight group-hover:text-primary transition-colors">{r.description || 'Resource'}</h3>
+                        </div>
+                      </div>
+                      <Zap size={20} className="text-amber-500 animate-pulse" />
                     </div>
-                  )}
-                </article>
-              ))}
-              {resources.length === 0 && <p className="text-sm text-text-muted">No active resources available.</p>}
+
+                    <button
+                      onClick={() => getSuggestionForResource(r._id)}
+                      disabled={suggestingId !== null}
+                      className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-primary text-primary font-black hover:bg-primary hover:text-white transition-all disabled:opacity-50 shadow-md shadow-primary/10 mb-6"
+                    >
+                      {suggestingId === r._id ? <Loader2 size={18} className="animate-spin" /> : <Activity size={18} />}
+                      Run Intelligent Matching
+                    </button>
+
+                    {suggestions[r._id] && (
+                      <div className="p-6 rounded-3xl bg-primary/5 border border-primary/20 animate-scale-in">
+                        <p className="mb-2 text-xs font-black uppercase tracking-tighter text-primary">Strategic Rationale</p>
+                        <p className="text-sm text-text font-medium leading-relaxed italic">"{typeof suggestions[r._id] === 'string' ? suggestions[r._id] : suggestions[r._id]?.reasoning || 'Recommendation validated.'}"</p>
+                      </div>
+                    )}
+                  </article>
+                )) : (
+                    <div className="col-span-full py-20 text-center">
+                         <Package size={48} className="mx-auto text-text-muted opacity-20 mb-4" />
+                         <p className="text-lg font-black text-text-muted">No eligible assets for intelligence mapping.</p>
+                    </div>
+                )}
+              </div>
             </div>
           )}
 
           {tab === 'action' && (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <form onSubmit={getActionSuggestion} className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">KYC Status</label>
-                  <select className="input-field" value={kycStatus} onChange={(e) => setKycStatus(e.target.value)}>
-                    {KYC_STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+            <div className="animate-fade-in grid grid-cols-1 gap-12 lg:grid-cols-2">
+              <div className="space-y-8">
+                 <div>
+                    <h2 className="text-2xl font-black text-text mb-2">Operational Scenario</h2>
+                    <p className="text-text-muted font-medium">Simulate field conditions to get strategic advice.</p>
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">Asset Situation</label>
-                  <select className="input-field" value={assetScenario} onChange={(e) => setAssetScenario(e.target.value)}>
-                    {ASSET_SCENARIO_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {assetScenario === 'OTHER' && (
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-text-muted">Enter Custom Details</label>
-                    <textarea
-                      className="input-field resize-none"
-                      rows={4}
-                      value={customAssetDetails}
-                      onChange={(e) => setCustomAssetDetails(e.target.value)}
-                      placeholder="Describe your custom situation"
-                      required
-                    />
-                  </div>
-                )}
-
-                {assetScenario !== 'OTHER' && (
-                  <p className="rounded-lg border border-white/10 bg-surface/30 p-3 text-xs text-text-muted">
-                    Selected scenario details: {SCENARIO_PROMPTS[assetScenario]}
-                  </p>
-                )}
-
-                <p className="text-xs text-text-muted">No key typing needed. Select options and generate action suggestion.</p>
-
-                <button type="submit" disabled={actionLoading} className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
-                  {actionLoading ? 'Generating...' : 'Generate Action'}
-                </button>
-              </form>
-
-              <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Suggested Output</p>
-                {!actionSuggestion && <p className="text-sm text-text-muted">Awaiting input.</p>}
-                {actionSuggestion && (
-                  <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-white/90">
+                <form onSubmit={getActionSuggestion} className="space-y-6">
                     <div className="space-y-2">
-                      {formatActionSuggestion(actionSuggestion)
-                        .split('\n')
-                        .map((line) => line.trim())
-                        .filter(Boolean)
-                        .map((line, index) => {
-                          const isHeading = /^(Approval Action:|Rationale:|Key information needed includes:|Maintenance or replacement plan:)/i.test(line);
-                          const normalizedLine = line.replace(/^(\d+\.\s+)/, '• ');
-
-                          return (
-                            <p key={`${line}-${index}`} className={isHeading ? 'font-semibold text-white' : 'text-white/90'}>
-                              {normalizedLine}
-                            </p>
-                          );
-                        })}
+                        <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-2">Member Authentication Level</label>
+                        <select className="input-field" value={kycStatus} onChange={(e) => setKycStatus(e.target.value)}>
+                            {KYC_STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
                     </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-2">Field Condition</label>
+                        <select className="input-field" value={assetScenario} onChange={(e) => setAssetScenario(e.target.value)}>
+                            {ASSET_SCENARIO_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {assetScenario === 'OTHER' && (
+                    <div className="animate-scale-in">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-2">Custom Situational Details</label>
+                        <textarea
+                        className="input-field resize-none min-h-[140px]"
+                        value={customAssetDetails}
+                        onChange={(e) => setCustomAssetDetails(e.target.value)}
+                        placeholder="Detail the specific operational anomaly..."
+                        required
+                        />
+                    </div>
+                    )}
+
+                    {assetScenario !== 'OTHER' && (
+                    <div className="p-4 rounded-2xl bg-surface border border-border text-xs font-bold text-text-muted italic flex items-center gap-3">
+                        <Target size={16} className="text-primary" />
+                        "{SCENARIO_PROMPTS[assetScenario]}"
+                    </div>
+                    )}
+
+                    <button type="submit" disabled={actionLoading} className="w-full h-16 bg-rose-500 text-white font-black rounded-2xl hover:bg-rose-600 transition-all shadow-xl shadow-rose-200 disabled:opacity-50">
+                    {actionLoading ? <Loader2 className="animate-spin mx-auto" /> : 'Execute Strategic Forecast'}
+                    </button>
+                </form>
+              </div>
+
+              <div className="bg-surface rounded-[32px] border border-border p-10 shadow-inner relative overflow-hidden min-h-[500px]">
+                <div className="flex items-center gap-3 mb-8">
+                     <span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse" />
+                     <h3 className="text-xs font-black uppercase tracking-widest text-text-muted">Intelligence Output</h3>
+                </div>
+                
+                {!actionSuggestion ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
+                         <div className="w-20 h-20 rounded-full border-4 border-dashed border-text-muted mb-6" />
+                         <p className="text-sm font-black uppercase tracking-widest text-text-muted">Awaiting Simulation Input</p>
+                    </div>
+                ) : (
+                  <div className="space-y-6 animate-fade-in relative z-10">
+                    {formatActionSuggestion(actionSuggestion)
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                    .map((line, index) => {
+                        const isHeading = /^(Approval Action:|Rationale:|Key information needed includes:|Maintenance or replacement plan:)/i.test(line);
+                        const normalizedLine = line.replace(/^(\d+\.\s+)/, '• ');
+
+                        return (
+                        <p key={`${line}-${index}`} className={`${isHeading ? 'text-lg font-black text-text mt-8 border-l-4 border-rose-500 pl-4' : 'text-text-muted font-bold text-sm leading-relaxed pl-5'} transition-all hover:translate-x-1`}>
+                            {normalizedLine}
+                        </p>
+                        );
+                    })}
                   </div>
                 )}
+                <Bot className="absolute -bottom-20 -right-20 text-primary/5" size={240} />
               </div>
             </div>
           )}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, Check, Edit2, Loader2, Plus, Sparkles, UserCog, X } from 'lucide-react';
+import { Archive, Check, Edit2, Loader2, Plus, Sparkles, UserCog, X, Package, Shield, Activity, MapPin, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
@@ -11,10 +11,10 @@ const RESOURCE_TYPES = ['VEHICLE', 'EQUIPMENT', 'COMMUNICATION_DEVICE', 'MEDICAL
 const STATUS_OPTIONS = ['AVAILABLE', 'ASSIGNED', 'ARCHIVED'];
 
 const statusBadge = {
-  AVAILABLE: 'bg-emerald-500/20 text-emerald-400',
-  ASSIGNED: 'bg-blue-500/20 text-blue-400',
-  MAINTENANCE: 'bg-amber-500/20 text-amber-400',
-  ARCHIVED: 'bg-surface-light text-text-muted'
+  AVAILABLE: 'bg-green-50 text-primary border-green-100',
+  ASSIGNED: 'bg-blue-50 text-blue-600 border-blue-100',
+  MAINTENANCE: 'bg-orange-50 text-orange-600 border-orange-100',
+  ARCHIVED: 'bg-slate-50 text-slate-500 border-slate-100'
 };
 
 function ResourceManagement() {
@@ -144,7 +144,6 @@ function ResourceManagement() {
   const openEdit = (row) => {
     setEditing(row);
     setForm({
-      // If the saved type is one of the known types, use it, otherwise treat it as OTHER
       type: RESOURCE_TYPES.includes(row.type) ? row.type : 'OTHER',
       description: row.description || '',
       serialNumber: row.metadata?.serialNumber || '',
@@ -270,332 +269,372 @@ function ResourceManagement() {
   };
 
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-screen bg-surface pb-16">
       <Navbar />
 
       {toast && (
-        <div className={`fixed right-6 top-6 z-50 rounded-xl px-4 py-3 text-sm text-white shadow-2xl ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+        <div className={`fixed right-6 top-6 z-50 rounded-2xl px-6 py-4 text-sm font-bold text-white shadow-2xl animate-fade-in ${toast.type === 'error' ? 'bg-red-500' : 'bg-primary'}`}>
           {toast.message}
         </div>
       )}
 
+      {/* Confirmation & Modals (Standardized Style) */}
       {pendingArchiveId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
-            <h3 className="mb-2 text-xl font-bold">Archive Resource</h3>
-            <p className="mb-6 text-sm text-text-muted">This moves the resource to archived state.</p>
-            <div className="flex gap-3">
-              <button onClick={archiveResource} className="flex-1 rounded-lg bg-amber-600 py-2.5 font-semibold text-white">Archive</button>
-              <button onClick={() => setPendingArchiveId(null)} className="flex-1 rounded-lg bg-surface-light py-2.5 font-semibold text-text">Cancel</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl border border-border">
+            <h3 className="mb-2 text-2xl font-black text-text">Archive Resource</h3>
+            <p className="mb-8 text-sm text-text-muted">This moves the resource to archived state. It will no longer be available for field use.</p>
+            <div className="flex gap-4">
+              <button onClick={archiveResource} className="flex-1 rounded-2xl bg-orange-500 py-4 font-black text-white hover:bg-orange-600 transition-colors">Archive</button>
+              <button onClick={() => setPendingArchiveId(null)} className="flex-1 rounded-2xl bg-surface py-4 font-black text-text hover:bg-border transition-colors">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
       {showAssignModal && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-xl font-bold">Assign Resource</h3>
-              <button onClick={() => setShowAssignModal(null)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
-                <X size={18} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl border border-border animate-float-in">
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-2xl font-black text-text tracking-tight">Assign Resource</h3>
+              <button onClick={() => setShowAssignModal(null)} className="rounded-xl p-2 text-text-muted hover:bg-surface transition-all">
+                <X size={20} />
               </button>
             </div>
 
-            <p className="mb-3 text-xs text-text-muted">Step 1: Get AI recommendation (optional)</p>
+            <div className="space-y-6">
+                <div>
+                    <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">AI Assistance</label>
+                    <button
+                        onClick={() => requestAiSuggestion(showAssignModal)}
+                        disabled={isSuggesting}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary/20 bg-primary/5 px-4 py-4 text-sm font-bold text-primary hover:bg-primary/10 transition-all disabled:opacity-60"
+                    >
+                        {isSuggesting ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                        Get Intelligent Recommendation
+                    </button>
+                </div>
 
-            <button
-              onClick={() => requestAiSuggestion(showAssignModal)}
-              disabled={isSuggesting}
-              className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2.5 text-sm font-semibold text-purple-300 disabled:opacity-60"
-            >
-              {isSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              Get AI Staff Suggestion
-            </button>
-
-            {aiSuggestedStaff && (
-              <div className="mb-4 rounded-lg border border-purple-500/30 bg-purple-500/10 p-3 text-sm">
-                <p className="mb-2 font-semibold text-purple-300">AI Recommendation</p>
-                {aiSuggestedStaff?.staffId && (
-                  <p className="mb-2 text-xs text-purple-200/80">
-                    Suggested staff ID: {aiSuggestedStaff.staffId}
-                  </p>
+                {aiSuggestedStaff && (
+                <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-5 animate-scale-in">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <Sparkles size={16} className="text-primary" />
+                        </div>
+                        <p className="font-black text-sm text-primary">AI Match Found</p>
+                    </div>
+                    <p className="text-sm text-text font-medium leading-relaxed italic">"{aiSuggestedStaff?.reasoning || String(aiSuggestedStaff)}"</p>
+                    <button
+                        onClick={() => setAssignStaffId(aiSuggestedStaff?.staffId || aiSuggestedStaff?._id || '')}
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-black text-white shadow-lg shadow-primary/20 hover:translate-y-[-2px] transition-all"
+                    >
+                        <Check size={14} /> Apply Recommendation
+                    </button>
+                </div>
                 )}
-                <p className="text-text-muted">{aiSuggestedStaff?.reasoning || String(aiSuggestedStaff)}</p>
-                <button
-                  onClick={() => setAssignStaffId(aiSuggestedStaff?.staffId || aiSuggestedStaff?._id || '')}
-                  className="mt-3 inline-flex items-center gap-1 rounded-md bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white"
-                >
-                  <Check size={14} /> Use suggestion
+
+                <div>
+                    <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">Staff Selection</label>
+                    <select className="input-field" value={assignStaffId} onChange={(e) => setAssignStaffId(e.target.value)}>
+                    <option value="">Choose a staff member...</option>
+                    {staff.map((s) => (
+                        <option key={s._id} value={s._id}>
+                        {s?.userId?.name || 'Unknown'} ({(s?.department || '').replace('_', ' ')})
+                        </option>
+                    ))}
+                    </select>
+                </div>
+
+                <button onClick={assignResource} disabled={!assignStaffId} className="btn-primary w-full py-4 text-base disabled:opacity-50">
+                    Confirm Assignment
                 </button>
-              </div>
-            )}
-
-            <p className="mb-2 text-xs text-text-muted">Step 2: Choose staff member and confirm assignment</p>
-            <label className="mb-1 block text-sm font-medium text-text-muted">Select Staff Member</label>
-            <select className="input-field" value={assignStaffId} onChange={(e) => setAssignStaffId(e.target.value)}>
-              <option value="">Choose one staff member</option>
-              {staff.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s?.userId?.name || 'Unknown'} ({(s?.department || '').replace('_', ' ')})
-                </option>
-              ))}
-            </select>
-            <p className="mt-2 text-xs text-text-muted">The selected staff member will lock this resource until it is set available again.</p>
-
-            <button onClick={assignResource} disabled={!assignStaffId} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
-              Assign Resource Now
-            </button>
+            </div>
           </div>
         </div>
       )}
 
       {showModal && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="glass-morphism w-full max-w-xl rounded-2xl p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-xl font-bold">{editing ? 'Update Resource' : 'Add New Resource'}</h3>
-              <button onClick={() => setShowModal(false)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
-                <X size={18} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-xl rounded-[40px] p-10 shadow-2xl border border-border animate-float-in">
+            <div className="mb-8 flex items-center justify-between">
+              <h3 className="text-3xl font-black text-text tracking-tight">{editing ? 'Edit Asset' : 'New Asset'}</h3>
+              <button onClick={() => setShowModal(false)} className="rounded-2xl p-3 text-text-muted hover:bg-surface transition-all">
+                <X size={24} />
               </button>
             </div>
 
-            <form className="space-y-4" onSubmit={saveResource}>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-text-muted">Resource Type</label>
-                <select className="input-field" value={form.type} onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}>
-                  {RESOURCE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
-                </select>
-                  {form.type === 'OTHER' && (
-                    <div className="mt-2">
-                      <input
-                        className="input-field"
-                        placeholder="Enter resource type"
-                        value={form.otherType}
-                        onChange={(e) => setForm((prev) => ({ ...prev, otherType: e.target.value }))}
+            <form className="space-y-6" onSubmit={saveResource}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">Asset Category</label>
+                    <select className="input-field" value={form.type} onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value }))}>
+                    {RESOURCE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+                    </select>
+                </div>
+                <div>
+                   <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">Serial Code</label>
+                    <input
+                        className="input-field font-mono"
+                        value={form.serialNumber}
+                        onChange={(e) => setForm((prev) => ({ ...prev, serialNumber: e.target.value }))}
+                        placeholder="SN-XXXX"
                         required
-                      />
-                    </div>
-                  )}
+                    />
+                </div>
               </div>
 
+              {form.type === 'OTHER' && (
+                <div className="animate-fade-in">
+                    <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">Specify Type</label>
+                    <input
+                    className="input-field"
+                    placeholder="Enter resource type"
+                    value={form.otherType}
+                    onChange={(e) => setForm((prev) => ({ ...prev, otherType: e.target.value }))}
+                    required
+                    />
+                </div>
+                )}
+
               <div>
-                <label className="mb-1 block text-sm font-medium text-text-muted">Description</label>
-                <textarea
-                  className="input-field resize-none"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="Resource details"
+                <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">Deployment Location</label>
+                <input
+                  className="input-field"
+                  value={form.location}
+                  onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
+                  placeholder="e.g. Ranger Station Alpha"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">Serial Number</label>
-                  <input
-                    className="input-field font-mono"
-                    value={form.serialNumber}
-                    onChange={(e) => setForm((prev) => ({ ...prev, serialNumber: e.target.value }))}
-                    placeholder="SN-001"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">Location</label>
-                  <input
-                    className="input-field"
-                    value={form.location}
-                    onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-                    placeholder="North Zone"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="mb-2 block text-xs font-black uppercase tracking-widest text-text-muted">Operational Details</label>
+                <textarea
+                  className="input-field min-h-[120px] resize-none"
+                  value={form.description}
+                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe technical status, maintenance needs, or special features..."
+                  required
+                />
               </div>
 
-              <button type="submit" className="btn-primary flex w-full items-center justify-center gap-2">
-                {editing ? <Edit2 size={16} /> : <Plus size={16} />}
-                {editing ? 'Update Resource' : 'Create Resource'}
+              <button type="submit" className="btn-primary w-full py-4 text-base">
+                {editing ? 'Update Asset Info' : 'Initialize Asset In System'}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      <main className={`mx-auto max-w-6xl px-6 ${navPt || 'mt-12'}`}>
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      {/* Main Content */}
+      <main className={`mx-auto max-w-7xl px-6 animate-fade-in ${navPt || 'mt-24'}`}>
+        <div className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-black">{isAdmin ? 'Resource Command' : 'Resource Pool'}</h1>
-            <p className="text-text-muted">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest mb-4">
+                <Package size={14} />
+                Strategic Assets
+            </div>
+            <h1 className="text-5xl font-black text-text tracking-tighter mb-2">
+                Resource <span className="text-primary">Inventory</span>
+            </h1>
+            <p className="text-text-muted text-lg max-w-2xl font-medium">
               {isAdmin
-                ? 'Manage assets, assign teams, and monitor usage in real time.'
-                : 'View all resources, take available equipment, and release when the mission is complete.'}
+                ? 'Central command for deploying equipment, managing regional assets, and optimizing field response units.'
+                : 'Access the regional equipment pool. Book verified assets for immediate deployment.'}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Link to="/ai-insights" className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-300">
-              Open AI Insights
+          <div className="flex items-center gap-4">
+             <Link to="/ai-insights" className="h-14 px-8 flex items-center gap-3 rounded-2xl border-2 border-primary/20 bg-white text-primary font-black hover:bg-primary/5 transition-all shadow-premium">
+              <Activity size={20} />
+              Operational Insights
             </Link>
             {isAdmin && (
-              <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2"><Plus size={16} /> Add Resource</button>
+              <button onClick={openCreate} className="btn-primary h-14 !px-8 flex items-center gap-2">
+                  <Plus size={20} />
+                  Add New Asset
+              </button>
             )}
           </div>
         </div>
 
+        {/* Admin Dashboard Statistics Section */}
         {isAdmin && (
-          <section className="mb-8 rounded-2xl border border-white/10 bg-surface/30 p-5">
-            <h2 className="text-xl font-bold">Admin Usage Report</h2>
-            <p className="mt-1 text-sm text-text-muted">Live overview of current resource utilization.</p>
-
-            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                <p className="text-xs text-text-muted">Total</p>
-                <p className="text-2xl font-bold">{usageReport.total}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                <p className="text-xs text-text-muted">Available</p>
-                <p className="text-2xl font-bold text-emerald-400">{usageReport.available}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                <p className="text-xs text-text-muted">In Use</p>
-                <p className="text-2xl font-bold text-blue-400">{usageReport.assigned}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                <p className="text-xs text-text-muted">Archived</p>
-                <p className="text-2xl font-bold text-text-muted">{usageReport.archived}</p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                <p className="text-xs text-text-muted">Utilization</p>
-                <p className="text-2xl font-bold">{usageReport.utilization}%</p>
-              </div>
+          <div className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 bg-white rounded-[40px] border border-border p-10 shadow-premium">
+               <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-black text-text">Fleet Availability</h2>
+                    <div className="px-4 py-2 rounded-xl bg-primary/5 text-primary text-sm font-bold border border-primary/10">
+                        {usageReport.utilization}% Utilization
+                    </div>
+               </div>
+               
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="p-6 rounded-3xl bg-surface border border-border">
+                        <p className="text-xs font-black text-text-muted uppercase tracking-widest mb-1">Total Assets</p>
+                        <p className="text-4xl font-black text-text">{usageReport.total}</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-green-50/50 border border-green-100">
+                        <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">Available</p>
+                        <p className="text-4xl font-black text-primary">{usageReport.available}</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-blue-50/50 border border-blue-100">
+                        <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">Deployed</p>
+                        <p className="text-4xl font-black text-blue-600">{usageReport.assigned}</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Archived</p>
+                        <p className="text-4xl font-black text-slate-500">{usageReport.archived}</p>
+                    </div>
+               </div>
             </div>
 
-            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
-              <h3 className="text-sm font-semibold">Usage by Department</h3>
-              {Object.keys(usageReport.byDepartment).length === 0 ? (
-                <p className="mt-2 text-sm text-text-muted">No active assignments yet.</p>
-              ) : (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {Object.entries(usageReport.byDepartment).map(([dept, count]) => (
-                    <span key={dept} className="rounded-full border border-white/15 bg-surface-light px-3 py-1 text-xs">
-                      {dept.replace(/_/g, ' ')}: {count}
-                    </span>
-                  ))}
+            <div className="bg-white rounded-[40px] border border-border p-10 shadow-premium">
+                <h3 className="text-xl font-black text-text mb-6">Department Distribution</h3>
+                <div className="space-y-4">
+                    {Object.keys(usageReport.byDepartment).length === 0 ? (
+                        <div className="py-8 text-center text-text-muted font-medium bg-surface rounded-3xl border border-dashed">
+                             No active deployments
+                        </div>
+                    ) : (
+                         Object.entries(usageReport.byDepartment).map(([dept, count]) => (
+                            <div key={dept} className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-border transition-hover hover:border-primary/30">
+                                <span className="font-bold text-text">{dept.replace(/_/g, ' ')}</span>
+                                <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-sm font-black shadow-lg shadow-primary/20">
+                                    {count}
+                                </span>
+                            </div>
+                        ))
+                    )}
                 </div>
-              )}
             </div>
-          </section>
+          </div>
         )}
 
-        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {STATUS_OPTIONS.map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(statusFilter === status ? '' : status)}
-              className={`rounded-xl border p-3 text-left ${statusFilter === status ? 'border-primary bg-primary/10' : 'border-white/10 bg-surface/30'}`}
-            >
-              <div className={`mb-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge[status]}`}>{status}</div>
-              <div className="text-2xl font-bold">{statusCounts[status] || 0}</div>
-            </button>
-          ))}
+        {/* Filter & Search Bar */}
+        <div className="mb-10 flex flex-col md:flex-row gap-6">
+            <div className="flex-1 flex items-center gap-4 bg-white rounded-3xl border border-border p-3 shadow-premium focus-within:border-primary/50 transition-all">
+                <div className="pl-4 text-primary">
+                    <Sparkles size={24} />
+                </div>
+                <input
+                    className="flex-1 bg-transparent py-2 px-2 text-lg font-medium text-text outline-none placeholder:text-text-muted"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Ask AI for resources... e.g. 'unassigned drones in rangers station'"
+                />
+                <button 
+                    onClick={handleAiSearch} 
+                    disabled={isAiSearching} 
+                    className="bg-primary px-8 py-4 rounded-2xl text-white font-black hover:translate-y-[-2px] transition-all disabled:opacity-50 active:scale-95 shadow-lg shadow-primary/20"
+                >
+                    {isAiSearching ? <Loader2 size={24} className="animate-spin" /> : 'Optimize Search'}
+                </button>
+            </div>
+            
+            <div className="flex gap-2">
+                {STATUS_OPTIONS.map((status) => (
+                    <button
+                    key={status}
+                    onClick={() => setStatusFilter(statusFilter === status ? '' : status)}
+                    className={`
+                        px-6 py-4 rounded-3xl border-2 font-black text-sm transition-all
+                        ${statusFilter === status 
+                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
+                            : 'bg-white border-border text-text-muted hover:border-primary/30 hover:text-primary'}
+                    `}
+                    >
+                    {status}
+                    </button>
+                ))}
+            </div>
         </div>
 
-        <div className="mb-4 rounded-xl border border-white/10 bg-surface/30 p-3 text-sm text-text-muted">
-          {isAdmin
-            ? 'Action guide: Assign to lock resource for a staff member. Edit to update details. Archive to retire a resource.'
-            : 'Action guide: Take Resource to reserve it for yourself. Set Available after use so other officers can take it.'}
-        </div>
-
-        <form onSubmit={handleAiSearch} className="mb-8 flex items-center gap-2 rounded-2xl border border-white/10 bg-surface/40 p-3">
-          <Sparkles size={16} className="text-purple-300" />
-          <input
-            className="w-full bg-transparent outline-none"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search resources by meaning, type, location, or description"
-          />
-          <button type="submit" disabled={isAiSearching} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-            {isAiSearching ? 'Searching...' : 'Search'}
-          </button>
-        </form>
-        <p className="-mt-6 mb-8 text-xs text-text-muted">Example: "available medical kits near north zone" or "assigned communication devices"</p>
-
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {/* Resource Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {loading && (
-            <div className="col-span-full py-20 text-center text-text-muted">
-              <Loader2 size={28} className="mx-auto mb-3 animate-spin" /> Loading resources...
+            <div className="col-span-full py-32 text-center text-text-muted">
+              <Loader2 size={48} className="mx-auto mb-6 animate-spin text-primary" /> 
+              <p className="text-xl font-bold">Synchronizing database assets...</p>
             </div>
           )}
 
           {!loading && resources.length === 0 && (
-            <div className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center">
-              <Archive size={40} className="mx-auto mb-3 text-text-muted" />
-              <p className="text-text-muted">No resources found.</p>
+            <div className="col-span-full rounded-[40px] border-4 border-dashed border-border py-32 text-center bg-white/50">
+              <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6 text-text-muted">
+                <Package size={40} />
+              </div>
+              <p className="text-2xl font-black text-text">No Matching Assets Found</p>
+              <p className="text-text-muted max-w-sm mx-auto mt-2">Try refreshing the filters or initializing new operational resources.</p>
             </div>
           )}
 
           {!loading && resources.map((r) => (
-            <article key={r._id} className="glass-morphism rounded-2xl border border-white/10 p-5">
-              <div className="mb-4 flex items-start justify-between gap-4">
+            <article key={r._id} className="group bg-white rounded-[40px] border border-border p-8 shadow-premium transition-all hover:shadow-2xl hover:translate-y-[-8px] hover:border-primary/20 flex flex-col">
+              <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-text-muted">{(r.type || '').replace(/_/g, ' ')}</p>
-                  <h3 className="text-lg font-bold leading-tight">{r.description}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">{(r.type || '').replace(/_/g, ' ')}</p>
+                  </div>
+                  <h3 className="text-2xl font-black text-text leading-tight group-hover:text-primary transition-colors">{r.description}</h3>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusBadge[r.status] || statusBadge.ARCHIVED}`}>
+                <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 ${statusBadge[r.status] || statusBadge.ARCHIVED}`}>
                   {r.status}
                 </span>
               </div>
 
-              <div className="mb-4 space-y-2 rounded-xl border border-white/10 bg-black/20 p-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Serial</span>
-                  <span className="font-mono">{r.metadata?.serialNumber || 'N/A'}</span>
+              <div className="mb-6 space-y-3 p-6 rounded-3xl bg-surface border border-border/50 group-hover:bg-primary/5 group-hover:border-primary/10 transition-colors">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-text-muted flex items-center gap-2"><Shield size={14} /> ID Code</span>
+                  <span className="font-mono text-text bg-white px-2 py-1 rounded-lg border border-border">{r.metadata?.serialNumber || 'N/A'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Location</span>
-                  <span>{r.metadata?.location || 'Unknown'}</span>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-text-muted flex items-center gap-2"><MapPin size={14} /> Deployment</span>
+                  <span className="text-text">{r.metadata?.location || 'Unknown'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Holder</span>
-                  <span>{r.status === 'ASSIGNED' ? getAssignedStaffName(r) : 'Unassigned'}</span>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-text-muted flex items-center gap-2"><Activity size={14} /> Current Holder</span>
+                  <span className="text-text">{r.status === 'ASSIGNED' ? getAssignedStaffName(r) : 'System Pool'}</span>
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="mt-auto flex gap-3">
                 {isAdmin && r.status !== 'ARCHIVED' && (
-                  <button onClick={() => openAssign(r._id)} className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-                    <span className="inline-flex items-center gap-1"><UserCog size={14} /> Assign</span>
+                  <button onClick={() => openAssign(r._id)} className="flex-1 h-14 rounded-2xl bg-primary/10 text-primary font-black flex items-center justify-center gap-2 hover:bg-primary transition-all hover:text-white shadow-sm border border-primary/20 hover:shadow-lg hover:shadow-primary/20">
+                     <UserCog size={18} />
+                     Assign
                   </button>
                 )}
 
                 {isOfficer && r.status === 'AVAILABLE' && (
-                  <button onClick={() => takeResource(r._id)} className="flex-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300">
+                  <button onClick={() => takeResource(r._id)} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black flex items-center justify-center gap-2 hover:translate-y-[-2px] transition-all shadow-lg shadow-primary/20">
+                    <Package size={18} />
                     Take Resource
                   </button>
                 )}
 
                 {isOfficer && r.status === 'ASSIGNED' && isAssignedToCurrentOfficer(r) && (
-                  <button onClick={() => releaseResource(r._id)} className="flex-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-300">
-                    Set Available
+                  <button onClick={() => releaseResource(r._id)} className="flex-1 h-14 rounded-2xl bg-orange-500 text-white font-black flex items-center justify-center gap-2 hover:translate-y-[-2px] transition-all shadow-lg shadow-orange-500/20">
+                    <Check size={18} />
+                    Release Asset
                   </button>
                 )}
 
                 {isOfficer && r.status === 'ASSIGNED' && !isAssignedToCurrentOfficer(r) && (
-                  <button disabled className="flex-1 cursor-not-allowed rounded-lg border border-white/10 bg-surface/20 px-3 py-2 text-sm font-semibold text-text-muted">
-                    Locked by Other Officer
+                  <button disabled className="flex-1 h-14 cursor-not-allowed rounded-2xl bg-surface border border-border text-text-muted font-black text-xs px-4">
+                    Locked to Ranger
                   </button>
                 )}
 
                 {isAdmin && (
-                  <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
-                    <Edit2 size={14} />
+                  <button onClick={() => openEdit(r)} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white border-2 border-border text-text-muted hover:text-primary hover:border-primary transition-all">
+                    <Edit2 size={18} />
                   </button>
                 )}
 
                 {isAdmin && r.status !== 'ARCHIVED' && (
-                  <button onClick={() => setPendingArchiveId(r._id)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-amber-500/40 hover:text-amber-400">
-                    <Archive size={14} />
+                  <button onClick={() => setPendingArchiveId(r._id)} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white border-2 border-border text-text-muted hover:text-orange-500 hover:border-orange-200 transition-all">
+                    <Archive size={18} />
                   </button>
                 )}
               </div>
@@ -603,39 +642,44 @@ function ResourceManagement() {
           ))}
         </div>
 
+        {/* Admin Audit Table */}
         {isAdmin && (
-          <section className="mt-10 rounded-2xl border border-white/10 bg-surface/30 p-5">
-            <h2 className="text-xl font-bold">Assigned Resource Report</h2>
-            <p className="mt-1 text-sm text-text-muted">Current active usage by staff members.</p>
+          <section className="mt-20 bg-white rounded-[40px] border border-border p-10 shadow-premium overflow-hidden">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                     <h2 className="text-3xl font-black text-text mb-2">Operational Audit</h2>
+                     <p className="text-text-muted font-medium">Real-time status tracking for all deployed assets.</p>
+                </div>
+            </div>
 
-            <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-black/30 text-text-muted">
-                  <tr>
-                    <th className="px-3 py-2">Resource</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2">Holder</th>
-                    <th className="px-3 py-2">Department</th>
-                    <th className="px-3 py-2">Status</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-border bg-surface/50">
+                    <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Asset Description</th>
+                    <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Type</th>
+                    <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Assigned Personnel</th>
+                    <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Service Dept</th>
+                    <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-text-muted text-right">Operational Status</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border">
                   {resources.filter((r) => r.status === 'ASSIGNED').length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-3 py-4 text-center text-text-muted">No assigned resources right now.</td>
+                      <td colSpan={5} className="px-6 py-12 text-center text-text-muted font-bold text-lg">No active field deployments tracking</td>
                     </tr>
                   ) : resources.filter((r) => r.status === 'ASSIGNED').map((r) => {
                     const assignedId = typeof r?.assignedTo === 'string' ? r.assignedTo : r?.assignedTo?._id;
                     const assignedStaff = findStaffById(assignedId) || r?.assignedTo;
 
                     return (
-                      <tr key={r._id} className="border-t border-white/10">
-                        <td className="px-3 py-2">{r.description || 'N/A'}</td>
-                        <td className="px-3 py-2">{(r.type || '').replace(/_/g, ' ')}</td>
-                        <td className="px-3 py-2">{assignedStaff?.userId?.name || 'Unknown'}</td>
-                        <td className="px-3 py-2">{(assignedStaff?.department || 'N/A').replace(/_/g, ' ')}</td>
-                        <td className="px-3 py-2">
-                          <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-300">ASSIGNED</span>
+                      <tr key={r._id} className="hover:bg-primary/5 transition-colors group">
+                        <td className="px-6 py-6 border-transparent font-bold text-text group-hover:text-primary">{r.description || 'N/A'}</td>
+                        <td className="px-6 py-6 border-transparent font-bold text-text-muted">{(r.type || '').replace(/_/g, ' ')}</td>
+                        <td className="px-6 py-6 border-transparent font-black text-text">{assignedStaff?.userId?.name || 'Unknown Ranger'}</td>
+                        <td className="px-6 py-6 border-transparent font-bold text-text-muted">{(assignedStaff?.department || 'N/A').replace(/_/g, ' ')}</td>
+                        <td className="px-6 py-6 border-transparent text-right">
+                          <span className="inline-flex px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100">DEPLOYED</span>
                         </td>
                       </tr>
                     );
