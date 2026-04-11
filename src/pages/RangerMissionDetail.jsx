@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
-import api from '../utils/api';
+import api, { API_BASE_URL, API_ORIGIN } from '../utils/api';
 import {
     ArrowLeft,
     ListChecks,
@@ -13,11 +13,6 @@ import {
     Trash2,
     CheckCircle2
 } from 'lucide-react';
-
-const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'https://api.wildsafe.daniruranathunga.live/api').replace(
-    /\/api\/?$/,
-    ''
-);
 
 function resolveMediaUrl(url) {
     if (!url || url === 'text-report') return null;
@@ -133,8 +128,7 @@ const RangerMissionDetail = () => {
         if (evidenceForm.gpsLng !== '') form.append('gpsLng', evidenceForm.gpsLng);
 
         const token = localStorage.getItem('token');
-        const base = import.meta.env.VITE_API_BASE_URL || 'https://api.wildsafe.daniruranathunga.live/api';
-        const url = `${base.replace(/\/$/, '')}/ranger/cases/${encodeURIComponent(caseId)}/evidence`;
+        const url = `${API_BASE_URL}/ranger/cases/${encodeURIComponent(caseId)}/evidence`;
         const res = await fetch(url, {
             method: 'POST',
             headers: token ? { Authorization: `Bearer ${token}` } : {},
