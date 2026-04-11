@@ -16,6 +16,17 @@ const HERO_IMAGE = "/assets/hero_ranger.png";
 const ABOUT_IMAGE = "/assets/about_center.png";
 const SERVICE_IMAGE = "/assets/service_drone.png";
 
+// Reliable image CDN URLs (picsum always loads)
+const IMG_ELEPHANT = "https://images.pexels.com/photos/66898/elephant-cub-tsavo-kenya-66898.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_TIGER = "https://images.pexels.com/photos/145939/pexels-photo-145939.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_BEAR = "https://images.pexels.com/photos/1123771/pexels-photo-1123771.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_LEOPARD = "https://images.pexels.com/photos/2220336/pexels-photo-2220336.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_GORILLA = "https://images.pexels.com/photos/2499934/pexels-photo-2499934.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_RHINO = "https://images.pexels.com/photos/631292/pexels-photo-631292.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_MONITORING = "https://images.pexels.com/photos/1181403/pexels-photo-1181403.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_RANGER = "https://images.pexels.com/photos/2249342/pexels-photo-2249342.jpeg?auto=compress&cs=tinysrgb&w=400";
+const IMG_ALERT = "https://images.pexels.com/photos/4921283/pexels-photo-4921283.jpeg?auto=compress&cs=tinysrgb&w=400";
+
 const Home = () => {
   return (
     <div className="min-h-screen bg-white">
@@ -135,7 +146,7 @@ const Home = () => {
                 </div>
                 <div className="space-y-6">
                   <div className="rounded-3xl overflow-hidden shadow-xl aspect-square">
-                    <img src="https://images.unsplash.com/photo-1549366021-9f761d450615?auto=format&fit=crop&w=500&q=80" alt="Elephant" className="w-full h-full object-cover" />
+                  <img src={IMG_ELEPHANT} alt="Elephant" className="w-full h-full object-cover" />
                   </div>
                   <div className="bg-primary p-8 rounded-3xl text-white">
                     <h3 className="text-4xl font-black mb-1">25+</h3>
@@ -200,7 +211,7 @@ const Home = () => {
                 icon: <Radar size={32} />, 
                 title: "Threat Monitoring", 
                 desc: "Real-time AI surveillance for dangerous wildlife movements.",
-                img: "https://images.unsplash.com/photo-1547407139-3c921a66005c?auto=format&fit=crop&w=400&q=80"
+                img: IMG_MONITORING
               },
               { 
                 icon: <Zap size={32} />, 
@@ -212,13 +223,13 @@ const Home = () => {
                 icon: <Activity size={32} />, 
                 title: "Ranger Missions", 
                 desc: "Immediate on-field response for reported wildlife threats.",
-                img: "https://images.unsplash.com/photo-1549366021-9f761d450615?auto=format&fit=crop&w=400&q=80"
+                img: IMG_RANGER
               },
               { 
                 icon: <MessageSquare size={32} />, 
                 title: "Alert System", 
                 desc: "Instant notifications for surrounding community members.",
-                img: "https://images.unsplash.com/photo-1516233221993-81c24b9a8e2e?auto=format&fit=crop&w=400&q=80"
+                img: IMG_ALERT
               }
             ].map((service, i) => (
               <div key={i} className="premium-card text-center group">
@@ -278,12 +289,12 @@ const Home = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {[
-              { name: "Elephant", img: "https://images.unsplash.com/photo-1549366021-9f761d450615?auto=format&fit=crop&w=200&q=80" },
-              { name: "Tiger", img: "https://images.unsplash.com/photo-1575550959106-5a7defe28b56?auto=format&fit=crop&w=200&q=80" },
-              { name: "Bear", img: "https://images.unsplash.com/photo-1516233221993-81c24b9a8e2e?auto=format&fit=crop&w=200&q=80" },
-              { name: "Leopard", img: "https://images.unsplash.com/photo-1547407139-3c921a66005c?auto=format&fit=crop&w=200&q=80" },
-              { name: "Gorilla", img: "https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=200&q=80" },
-              { name: "Rhino", img: "https://images.unsplash.com/photo-1547144918-05b1c5905f01?auto=format&fit=crop&w=200&q=80" }
+              { name: "Elephant", img: IMG_ELEPHANT },
+              { name: "Tiger", img: IMG_TIGER },
+              { name: "Bear", img: IMG_BEAR },
+              { name: "Leopard", img: IMG_LEOPARD },
+              { name: "Gorilla", img: IMG_GORILLA },
+              { name: "Rhino", img: IMG_RHINO }
             ].map((s, i) => (
               <div key={i} className="text-center group">
                 <div className="w-full aspect-square rounded-full overflow-hidden mb-4 border-2 border-border group-hover:border-primary transition-all">

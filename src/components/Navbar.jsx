@@ -62,8 +62,8 @@ const Navbar = () => {
                 `}>
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-all">
-                            <Globe className="text-primary" size={24} />
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+                            <img src="/favicon.svg" alt="WildSafe Logo" className="w-10 h-10 object-contain" />
                         </div>
                         <span className={`text-2xl font-black tracking-tighter ${isAuthenticated && location.pathname !== '/' ? 'text-white' : 'text-text'}`}>
                             Wild<span className="text-primary">Safe</span>

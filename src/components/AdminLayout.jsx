@@ -57,8 +57,8 @@ const AdminLayout = ({ children }) => {
             >
                 {/* Logo Section */}
                 <div className="flex items-center gap-4 px-6 h-24 shrink-0 overflow-hidden">
-                    <div className="p-2.5 bg-primary/10 rounded-2xl border border-primary/20 shadow-premium group cursor-pointer">
-                        <Globe className="text-primary group-hover:rotate-180 transition-transform duration-700" size={28} />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                        <img src="/favicon.svg" alt="WildSafe" className="w-10 h-10 object-contain" />
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col animate-fade-in">
