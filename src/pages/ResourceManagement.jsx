@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X } from 'lucide-react';
+import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import aiService from '../services/aiService';
 
@@ -17,6 +18,8 @@ const statusBadge = {
 };
 
 function ResourceManagement() {
+  const { user } = useAuth();
+  const isOfficer = user?.role === 'OFFICER';
   const navPt = useFixedNavOffsetClass();
   const [resources, setResources] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -180,9 +183,13 @@ function ResourceManagement() {
   };
 
   const assignResource = async () => {
-    if (!assignStaffId || !showAssignModal) return;
+    if (!showAssignModal) return;
+    if (!isOfficer && !assignStaffId) return;
+
+    const payload = isOfficer ? {} : { staffId: assignStaffId };
+
     try {
-      await api.put(`/resources/${showAssignModal}/assign`, { staffId: assignStaffId });
+      await api.put(`/resources/${showAssignModal}/assign`, payload);
       notify('Resource assigned');
       setShowAssignModal(null);
       setAssignStaffId('');
@@ -190,6 +197,16 @@ function ResourceManagement() {
       await loadResources();
     } catch (error) {
       notify(error?.response?.data?.message || 'Assignment failed', 'error');
+    }
+  };
+
+  const releaseResource = async (resourceId) => {
+    try {
+      await api.put(`/resources/${resourceId}/release`);
+      notify('Resource is now available');
+      await loadResources();
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Release failed', 'error');
     }
   };
 
@@ -226,16 +243,18 @@ function ResourceManagement() {
               </button>
             </div>
 
-            <button
-              onClick={() => requestAiSuggestion(showAssignModal)}
-              disabled={isSuggesting}
-              className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2.5 text-sm font-semibold text-purple-300 disabled:opacity-60"
-            >
-              {isSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              Get AI Staff Suggestion
-            </button>
+            {!isOfficer && (
+              <button
+                onClick={() => requestAiSuggestion(showAssignModal)}
+                disabled={isSuggesting}
+                className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2.5 text-sm font-semibold text-purple-300 disabled:opacity-60"
+              >
+                {isSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                Get AI Staff Suggestion
+              </button>
+            )}
 
-            {aiSuggestedStaff && (
+            {!isOfficer && aiSuggestedStaff && (
               <div className="mb-4 rounded-lg border border-purple-500/30 bg-purple-500/10 p-3 text-sm">
                 <p className="mb-2 font-semibold text-purple-300">AI Recommendation</p>
                 <p className="text-text-muted">{aiSuggestedStaff?.reasoning || String(aiSuggestedStaff)}</p>
@@ -248,18 +267,26 @@ function ResourceManagement() {
               </div>
             )}
 
-            <label className="mb-1 block text-sm font-medium text-text-muted">Select Staff</label>
-            <select className="input-field" value={assignStaffId} onChange={(e) => setAssignStaffId(e.target.value)}>
-              <option value="">Select staff member</option>
-              {staff.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s?.userId?.name || 'Unknown'} ({(s?.department || '').replace('_', ' ')})
-                </option>
-              ))}
-            </select>
+            {isOfficer ? (
+              <div className="rounded-lg border border-white/10 bg-surface/40 p-3 text-sm text-text-muted">
+                This resource will be assigned to your officer account.
+              </div>
+            ) : (
+              <>
+                <label className="mb-1 block text-sm font-medium text-text-muted">Select Staff</label>
+                <select className="input-field" value={assignStaffId} onChange={(e) => setAssignStaffId(e.target.value)}>
+                  <option value="">Select staff member</option>
+                  {staff.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s?.userId?.name || 'Unknown'} ({(s?.department || '').replace('_', ' ')})
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
-            <button onClick={assignResource} disabled={!assignStaffId} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
-              Confirm Assignment
+            <button onClick={assignResource} disabled={!isOfficer && !assignStaffId} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
+              {isOfficer ? 'Assign To Me' : 'Confirm Assignment'}
             </button>
           </div>
         </div>
@@ -402,12 +429,23 @@ function ResourceManagement() {
                   <span className="text-text-muted">Location</span>
                   <span>{r.metadata?.location || 'Unknown'}</span>
                 </div>
+                {r.assignedTo?.userId?.name && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-muted">Assigned To</span>
+                    <span>{r.assignedTo.userId.name}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2">
-                {r.status !== 'ARCHIVED' && (
+                {r.status === 'AVAILABLE' && (
                   <button onClick={() => openAssign(r._id)} className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
                     <span className="inline-flex items-center gap-1"><UserCog size={14} /> Assign</span>
+                  </button>
+                )}
+                {r.status === 'ASSIGNED' && (user?.role === 'ADMIN' || r?.assignedTo?.userId?._id === user?._id) && (
+                  <button onClick={() => releaseResource(r._id)} className="flex-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300">
+                    <span className="inline-flex items-center gap-1"><RotateCcw size={14} /> Return</span>
                   </button>
                 )}
                 <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
