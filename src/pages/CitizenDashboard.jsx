@@ -102,7 +102,11 @@ const CitizenDashboard = () => {
                             </div>
                         ) : (
                             allReports.map((report) => (
-                                <div key={report._id} className="p-6 px-10 glass-morphism transition-all hover:translate-x-2 hover:bg-surface/90 cursor-pointer">
+                                <Link
+                                    key={report._id}
+                                    to={`/report/${report.threatType ? 'threat' : 'incident'}/${report._id}`}
+                                    className="block p-6 px-10 glass-morphism transition-all hover:translate-x-2 hover:bg-surface/90 cursor-pointer"
+                                >
                                     <div className="flex justify-between items-center">
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-4 mb-1">
@@ -133,7 +137,7 @@ const CitizenDashboard = () => {
                                         </div>
                                         <ChevronRight className="text-text-muted" />
                                     </div>
-                                </div>
+                                </Link>
                             ))
                         )}
                     </div>
