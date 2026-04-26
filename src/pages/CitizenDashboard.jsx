@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
-import { Plus, Clock, MapPin, ChevronRight, AlertCircle } from 'lucide-react';
+import { Plus, Clock, MapPin, ChevronRight, AlertCircle, Trash2 } from 'lucide-react';
 
 const CitizenDashboard = () => {
     const [threatReports, setThreatReports] = useState([]);
@@ -26,6 +26,31 @@ const CitizenDashboard = () => {
         };
         fetchData();
     }, []);
+
+    const canDelete = (report) => {
+        // Can delete if status is SUBMITTED or PENDING (not yet reviewed)
+        const deletableStatuses = ['SUBMITTED', 'PENDING'];
+        return deletableStatuses.includes(report.status);
+    };
+
+    const handleDelete = async (report, type) => {
+        if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            if (type === 'incident') {
+                await api.delete(`/incidents/${report._id}/mine`);
+                setIncidents(incidents.filter(i => i._id !== report._id));
+            } else {
+                await api.delete(`/threat-reports/${report._id}/mine`);
+                setThreatReports(threatReports.filter(t => t._id !== report._id));
+            }
+        } catch (err) {
+            console.error('Failed to delete report:', err);
+            alert(err.response?.data?.message || 'Failed to delete report. Please try again.');
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -131,7 +156,21 @@ const CitizenDashboard = () => {
                                                 <span>Lat: {report.location.lat.toFixed(4)}, Lng: {report.location.lng.toFixed(4)}</span>
                                             </div>
                                         </div>
-                                        <ChevronRight className="text-text-muted" />
+                                        <div className="flex items-center gap-3">
+                                            {canDelete(report) && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(report, report.threatType ? 'threat' : 'incident');
+                                                    }}
+                                                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                    title="Delete report"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                            <ChevronRight className="text-text-muted" />
+                                        </div>
                                     </div>
                                 </div>
                             ))
