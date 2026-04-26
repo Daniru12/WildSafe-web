@@ -8,6 +8,7 @@ const PERMISSIONS = ['VIEW_INCIDENTS', 'MANAGE_INCIDENTS', 'VIEW_CASES', 'MANAGE
 
 function StaffManagement() {
   const [staff, setStaff] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [toast, setToast] = useState(null);
@@ -27,6 +28,15 @@ function StaffManagement() {
     setTimeout(() => setToast(null), 2500);
   }, []);
 
+  const loadUsers = useCallback(async () => {
+    try {
+      const { data } = await api.get('/auth/users');
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    }
+  }, []);
+
   const loadStaff = useCallback(async () => {
     setLoading(true);
     try {
@@ -41,7 +51,8 @@ function StaffManagement() {
 
   useEffect(() => {
     loadStaff();
-  }, [loadStaff]);
+    loadUsers();
+  }, [loadStaff, loadUsers]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return staff;
@@ -146,15 +157,45 @@ function StaffManagement() {
 
             <form className="space-y-5" onSubmit={saveStaff}>
               {!editing && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-text-muted">User ID</label>
-                  <input
-                    value={form.userId}
-                    onChange={(e) => setForm((prev) => ({ ...prev, userId: e.target.value }))}
-                    className="input-field"
-                    placeholder="Paste MongoDB ObjectId"
-                    required
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-text-muted">Select User</label>
+                    <select
+                      value={form.userId}
+                      onChange={(e) => setForm((prev) => ({ ...prev, userId: e.target.value }))}
+                      className="input-field"
+                      required
+                    >
+                      <option value="">Choose a user...</option>
+                      {users
+                        .filter(u => !staff.some(s => (s.userId?._id || s.userId) === u._id))
+                        .map((u) => (
+                          <option key={u._id} value={u._id}>
+                            {u.name} ({u.email})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {form.userId && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-primary">Selected User Details</p>
+                      {(() => {
+                        const selected = users.find(u => u._id === form.userId);
+                        return selected ? (
+                          <div className="mt-2">
+                            <p className="text-lg font-bold">{selected.name}</p>
+                            <p className="text-sm text-text-muted">{selected.email}</p>
+                            <div className="mt-2 inline-block rounded-full bg-surface-light px-2 py-0.5 text-[10px] font-bold">
+                              ROLE: {selected.role}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-sm text-text-muted italic">Details not found.</p>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X, RotateCcw } from 'lucide-react';
+import { Activity, Archive, Check, Edit2, Loader2, Package, Plus, Search, Sparkles, UserCog, X, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useFixedNavOffsetClass } from '../hooks/useFixedNavOffsetClass';
@@ -46,10 +46,60 @@ function ResourceManagement() {
     location: ''
   });
 
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionContext, setActionContext] = useState('');
+  const [selectedResourceId, setSelectedResourceId] = useState('');
+  const [actionSuggestion, setActionSuggestion] = useState('');
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
   const notify = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 2800);
   }, []);
+
+  const formatAiSuggestion = (text, onUse) => {
+    if (!text) return null;
+    let cleanText = text.replace(/\*\*/g, '');
+    const lines = cleanText.split(/\d+\./).filter(l => l.trim());
+
+    const renderLine = (line, index) => {
+      const foundStaff = staff.find(s => s._id && line.includes(s._id));
+      let lineContent = line;
+      if (foundStaff) {
+        lineContent = line.split(foundStaff._id).join(foundStaff.userId?.name || 'Staff Member');
+      }
+
+      return (
+        <li key={index} className="group">
+          <div className="flex gap-3 items-start">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-[10px] font-bold text-purple-300 border border-purple-500/30">
+              {index + 1}
+            </span>
+            <div className="flex-1">
+              <p className="text-text-muted leading-relaxed">{lineContent.trim()}</p>
+              {foundStaff && onUse && (
+                <button 
+                  onClick={() => onUse(foundStaff._id)}
+                  className="mt-2 text-[10px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 uppercase tracking-widest transition-colors"
+                >
+                  <Check size={10} /> Select this candidate
+                </button>
+              )}
+            </div>
+          </div>
+        </li>
+      );
+    };
+
+    if (lines.length > 1) {
+      return (
+        <ul className="space-y-4 mt-2">
+          {lines.map((line, i) => renderLine(line, i))}
+        </ul>
+      );
+    }
+    return <div className="mt-2">{renderLine(cleanText, 0)}</div>;
+  };
 
   const loadResources = useCallback(async () => {
     setLoading(true);
@@ -210,6 +260,27 @@ function ResourceManagement() {
     }
   };
 
+  const getActionSuggestion = async (e) => {
+    e.preventDefault();
+    if (!selectedResourceId) return;
+    
+    const res = resources.find(r => r._id === selectedResourceId);
+    const kycStatus = res?.status || 'UNKNOWN';
+    const assetDetails = `${res?.description} - SN: ${res?.metadata?.serialNumber}. Context: ${actionContext}`;
+
+    setIsActionLoading(true);
+    setActionSuggestion('');
+    try {
+      const result = await aiService.suggestUserAction(kycStatus, assetDetails);
+      setActionSuggestion(result?.suggestion || 'No suggestion generated');
+      notify('Action suggestion ready');
+    } catch (error) {
+      notify('Failed to generate action', 'error');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-16">
       <Navbar />
@@ -235,9 +306,9 @@ function ResourceManagement() {
 
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="glass-morphism w-full max-w-md rounded-2xl p-6">
+          <div className="glass-morphism w-full max-w-md rounded-2xl p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-xl font-bold">Assign Resource</h3>
+              <h3 className="text-xl font-bold">{isOfficer ? 'Get Resource' : 'Assign Resource'}</h3>
               <button onClick={() => setShowAssignModal(null)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
                 <X size={18} />
               </button>
@@ -255,15 +326,17 @@ function ResourceManagement() {
             )}
 
             {!isOfficer && aiSuggestedStaff && (
-              <div className="mb-4 rounded-lg border border-purple-500/30 bg-purple-500/10 p-3 text-sm">
-                <p className="mb-2 font-semibold text-purple-300">AI Recommendation</p>
-                <p className="text-text-muted">{aiSuggestedStaff?.reasoning || String(aiSuggestedStaff)}</p>
-                <button
-                  onClick={() => setAssignStaffId(aiSuggestedStaff?.staffId || aiSuggestedStaff?._id || '')}
-                  className="mt-3 inline-flex items-center gap-1 rounded-md bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white"
-                >
-                  <Check size={14} /> Use suggestion
-                </button>
+              <div className="mb-4 rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 text-sm shadow-inner">
+                <div className="flex items-center gap-2 mb-4">
+                   <div className="p-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30">
+                      <Sparkles size={14} className="text-purple-300" />
+                   </div>
+                   <p className="font-bold text-purple-300 tracking-tight text-xs uppercase">AI Recognition Output</p>
+                </div>
+                {formatAiSuggestion(aiSuggestedStaff, (id) => {
+                  setAssignStaffId(id);
+                  notify('Candidate selected from AI suggestion');
+                })}
               </div>
             )}
 
@@ -286,7 +359,7 @@ function ResourceManagement() {
             )}
 
             <button onClick={assignResource} disabled={!isOfficer && !assignStaffId} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
-              {isOfficer ? 'Assign To Me' : 'Confirm Assignment'}
+              {isOfficer ? 'Confirm Request' : 'Confirm Assignment'}
             </button>
           </div>
         </div>
@@ -294,7 +367,7 @@ function ResourceManagement() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="glass-morphism w-full max-w-xl rounded-2xl p-6">
+          <div className="glass-morphism w-full max-w-xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-bold">{editing ? 'Update Resource' : 'Add New Resource'}</h3>
               <button onClick={() => setShowModal(false)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
@@ -354,6 +427,74 @@ function ResourceManagement() {
         </div>
       )}
 
+      {showActionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="glass-morphism w-full max-w-xl rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-rose-500/20 p-2 border border-rose-500/30 text-rose-400">
+                  <Sparkles size={20} />
+                </div>
+                <h3 className="text-xl font-bold">AI Action Assistant</h3>
+              </div>
+              <button onClick={() => setShowActionModal(false)} className="rounded-lg p-2 text-text-muted hover:bg-surface-light hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form className="space-y-5" onSubmit={getActionSuggestion}>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-text-muted">Select Resource</label>
+                <select 
+                  className="input-field" 
+                  value={selectedResourceId} 
+                  onChange={(e) => setSelectedResourceId(e.target.value)}
+                  required
+                >
+                  <option value="">Choose a resource...</option>
+                  {resources.map((r) => (
+                    <option key={r._id} value={r._id}>
+                      {r.description} ({r.metadata?.serialNumber})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-text-muted">Current Context / Problem</label>
+                <textarea
+                  className="input-field resize-none"
+                  rows={3}
+                  value={actionContext}
+                  onChange={(e) => setActionContext(e.target.value)}
+                  placeholder="e.g. Engine making noise, or need it for mission X"
+                  required
+                />
+              </div>
+
+              <button type="submit" disabled={isActionLoading} className="btn-primary w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 border-rose-400/50">
+                {isActionLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                {isActionLoading ? 'Analyzing...' : 'Generate Action Suggestion'}
+              </button>
+            </form>
+
+            {actionSuggestion && (
+              <div className="mt-6 animate-in fade-in slide-in-from-top-2 duration-500">
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 shadow-inner">
+                   <div className="flex items-center gap-2 mb-3">
+                      <div className="p-1.5 rounded-lg bg-rose-500/20 border border-rose-500/30">
+                        <Activity size={14} className="text-rose-300" />
+                      </div>
+                      <p className="font-bold text-rose-300 tracking-tight uppercase text-[10px]">Strategic Output</p>
+                   </div>
+                   {formatAiSuggestion(actionSuggestion)}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <main className={`mx-auto max-w-6xl px-6 ${navPt || 'mt-12'}`}>
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -361,10 +502,17 @@ function ResourceManagement() {
             <p className="text-text-muted">Manage assets with dedicated metadata and AI-assisted assignment.</p>
           </div>
           <div className="flex gap-2">
+            <button onClick={() => setShowActionModal(true)} className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-500/20 transition-colors flex items-center gap-2">
+              <Activity size={16} /> Action Assistant
+            </button>
             <Link to="/ai-insights" className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-4 py-2 text-sm font-semibold text-purple-300">
               Open AI Insights
             </Link>
-            <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2"><Plus size={16} /> Add Resource</button>
+            {!isOfficer && (
+              <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
+                <Plus size={16} /> Add Resource
+              </button>
+            )}
           </div>
         </div>
 
@@ -440,7 +588,10 @@ function ResourceManagement() {
               <div className="flex gap-2">
                 {r.status === 'AVAILABLE' && (
                   <button onClick={() => openAssign(r._id)} className="flex-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-                    <span className="inline-flex items-center gap-1"><UserCog size={14} /> Assign</span>
+                    <span className="inline-flex items-center gap-1">
+                      {isOfficer ? <Package size={14} /> : <UserCog size={14} />}
+                      {isOfficer ? 'Get Resource' : 'Assign'}
+                    </span>
                   </button>
                 )}
                 {r.status === 'ASSIGNED' && (user?.role === 'ADMIN' || r?.assignedTo?.userId?._id === user?._id) && (
@@ -448,13 +599,17 @@ function ResourceManagement() {
                     <span className="inline-flex items-center gap-1"><RotateCcw size={14} /> Return</span>
                   </button>
                 )}
-                <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
-                  <Edit2 size={14} />
-                </button>
-                {r.status !== 'ARCHIVED' && (
-                  <button onClick={() => setPendingArchiveId(r._id)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-amber-500/40 hover:text-amber-400">
-                    <Archive size={14} />
-                  </button>
+                {!isOfficer && (
+                  <>
+                    <button onClick={() => openEdit(r)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-primary/30 hover:text-primary">
+                      <Edit2 size={14} />
+                    </button>
+                    {r.status !== 'ARCHIVED' && (
+                      <button onClick={() => setPendingArchiveId(r._id)} className="rounded-lg border border-white/10 bg-surface/30 px-3 py-2 text-sm hover:border-amber-500/40 hover:text-amber-400">
+                        <Archive size={14} />
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </article>

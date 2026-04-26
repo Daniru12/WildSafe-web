@@ -80,13 +80,22 @@ const Navbar = () => {
                             <div className="h-6 w-px bg-white/10 mx-2" />
                         )}
 
+                        {isAuthenticated && (
+                             <Link 
+                                to="/dashboard" 
+                                className={`
+                                    flex items-center gap-2 text-sm font-bold transition-all
+                                    ${isActive('/dashboard') ? 'text-primary' : 'text-text-muted hover:text-white'}
+                                `}
+                            >
+                                <LayoutDashboard size={18} />
+                                <span>Dashboard</span>
+                            </Link>
+                        )}
+
 
                             {user?.role === 'OFFICER' && (
                                 <>
-                                    <Link to="/case-management" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
-                                        <Shield size={18} />
-                                        <span>Case Management</span>
-                                    </Link>
                                     <Link to="/alerts" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
                                         <AlertTriangle size={18} />
                                         <span>Alerts</span>
@@ -95,25 +104,11 @@ const Navbar = () => {
                                         <Package size={18} />
                                         <span>Resources</span>
                                     </Link>
-                                    <Link to="/analytics" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-text-muted font-medium transition-colors hover:text-primary">
-                                        <BarChart3 size={18} />
-                                        <span>Analytics</span>
-                                    </Link>
                                 </>
                             )}
 
                         {isAuthenticated ? (
                             <div className="flex items-center gap-6">
-                                <Link 
-                                    to="/dashboard" 
-                                    className={`
-                                        flex items-center gap-2 text-sm font-bold transition-all
-                                        ${isActive('/dashboard') ? 'text-primary' : 'text-text-muted hover:text-white'}
-                                    `}
-                                >
-                                    <LayoutDashboard size={18} />
-                                    <span>Dashboard</span>
-                                </Link>
 
 
                                 {user?.role === 'CITIZEN' && (
@@ -222,17 +217,20 @@ const Navbar = () => {
                                 {link.name}
                             </Link>
                         ))}
+
+                        {isAuthenticated && (
+                             <Link 
+                                to="/dashboard" 
+                                onClick={() => setIsOpen(false)}
+                                className={`flex items-center gap-3 font-bold ${isActive('/dashboard') ? 'text-primary' : 'text-white'}`}
+                            >
+                                <LayoutDashboard size={20} />
+                                Dashboard
+                            </Link>
+                        )}
                         
                         {isAuthenticated ? (
                             <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
-                                <Link 
-                                    to="/dashboard" 
-                                    onClick={() => setIsOpen(false)}
-                                    className="flex items-center gap-3 text-white font-bold"
-                                >
-                                    <LayoutDashboard size={20} />
-                                    Dashboard
-                                </Link>
                                 {user?.role === 'OFFICER' && (
                                     <Link 
                                         to="/ranger-missions" 

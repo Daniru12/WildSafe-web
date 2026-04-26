@@ -21,13 +21,51 @@ function AiInsights() {
   const [assetDetails, setAssetDetails] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuggestion, setActionSuggestion] = useState('');
+  const [staff, setStaff] = useState([]);
+
+  const formatAiSuggestion = (text) => {
+    if (!text) return null;
+    let cleanText = text.replace(/\*\*/g, '');
+    const lines = cleanText.split(/\d+\./).filter(l => l.trim());
+
+    const renderLine = (line, index) => {
+      const foundStaff = staff.find(s => s._id && line.includes(s._id));
+      let lineContent = line;
+      if (foundStaff) {
+        lineContent = line.split(foundStaff._id).join(foundStaff.userId?.name || 'Staff Member');
+      }
+
+      return (
+        <li key={index} className="flex gap-3 items-start">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-[10px] font-bold text-indigo-300 border border-indigo-500/30">
+            {index + 1}
+          </span>
+          <p className="text-text-muted leading-relaxed">{lineContent.trim()}</p>
+        </li>
+      );
+    };
+
+    if (lines.length > 1) {
+      return (
+        <ul className="space-y-4 mt-3">
+          {lines.map((line, i) => renderLine(line, i))}
+        </ul>
+      );
+    }
+    return <div className="mt-2">{renderLine(cleanText, 0)}</div>;
+  };
 
   const loadResources = useCallback(async () => {
     try {
-      const { data } = await api.get('/resources');
-      setResources(Array.isArray(data) ? data.filter((r) => r.status !== 'ARCHIVED') : []);
+      const [{ data: resData }, { data: staffData }] = await Promise.all([
+        api.get('/resources'),
+        api.get('/staff')
+      ]);
+      setResources(Array.isArray(resData) ? resData.filter((r) => r.status !== 'ARCHIVED') : []);
+      setStaff(Array.isArray(staffData) ? staffData : []);
     } catch {
       setResources([]);
+      setStaff([]);
     }
   }, []);
 
@@ -162,9 +200,12 @@ function AiInsights() {
                   </button>
 
                   {suggestions[r._id] && (
-                    <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-3 text-sm text-text-muted">
-                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-indigo-300">AI Suggestion</p>
-                      <p>{typeof suggestions[r._id] === 'string' ? suggestions[r._id] : suggestions[r._id]?.reasoning || 'Suggestion generated'}</p>
+                    <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 text-sm text-text-muted shadow-inner">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles size={14} className="text-indigo-300" />
+                        <p className="text-xs font-bold uppercase tracking-widest text-indigo-300">AI Intelligence</p>
+                      </div>
+                      {formatAiSuggestion(typeof suggestions[r._id] === 'string' ? suggestions[r._id] : suggestions[r._id]?.reasoning || 'Suggestion generated')}
                     </div>
                   )}
                 </article>
