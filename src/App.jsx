@@ -23,6 +23,7 @@ import StaffManagement from './pages/StaffManagement';
 import ResourceManagement from './pages/ResourceManagement';
 import AiInsights from './pages/AiInsights';
 import UserManagement from './pages/UserManagement';
+import ReportDetail from './pages/ReportDetail';
 import AdminLayout from './components/AdminLayout';
 
 // Protected Route Component
@@ -102,6 +103,15 @@ function App() {
             element={
               <ProtectedRoute roles={['CITIZEN']}>
                 <ReportIncident />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/report/:type/:id"
+            element={
+              <ProtectedRoute>
+                <ReportDetail />
               </ProtectedRoute>
             }
           />
