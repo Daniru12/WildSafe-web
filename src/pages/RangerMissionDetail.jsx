@@ -53,9 +53,7 @@ const RangerMissionDetail = () => {
         files: [],
         description: '',
         notes: '',
-        conditionSummary: '',
-        gpsLat: '',
-        gpsLng: ''
+        conditionSummary: ''
     });
 
     const fetchDetail = useCallback(async () => {
@@ -129,8 +127,6 @@ const RangerMissionDetail = () => {
         if (evidenceForm.description) form.append('description', evidenceForm.description);
         if (evidenceForm.notes) form.append('notes', evidenceForm.notes);
         if (evidenceForm.conditionSummary) form.append('conditionSummary', evidenceForm.conditionSummary);
-        if (evidenceForm.gpsLat !== '') form.append('gpsLat', evidenceForm.gpsLat);
-        if (evidenceForm.gpsLng !== '') form.append('gpsLng', evidenceForm.gpsLng);
 
         const token = localStorage.getItem('token');
         const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
@@ -146,9 +142,7 @@ const RangerMissionDetail = () => {
             files: [],
             description: '',
             notes: '',
-            conditionSummary: '',
-            gpsLat: '',
-            gpsLng: ''
+            conditionSummary: ''
         });
     };
 
@@ -418,26 +412,6 @@ const RangerMissionDetail = () => {
                                             value={evidenceForm.conditionSummary}
                                             onChange={(e) =>
                                                 setEvidenceForm((f) => ({ ...f, conditionSummary: e.target.value }))
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs text-text-muted">GPS lat</label>
-                                        <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
-                                            value={evidenceForm.gpsLat}
-                                            onChange={(e) =>
-                                                setEvidenceForm((f) => ({ ...f, gpsLat: e.target.value }))
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs text-text-muted">GPS lng</label>
-                                        <input
-                                            className="w-full rounded-lg bg-surface border border-border text-white px-3 py-2 text-sm"
-                                            value={evidenceForm.gpsLng}
-                                            onChange={(e) =>
-                                                setEvidenceForm((f) => ({ ...f, gpsLng: e.target.value }))
                                             }
                                         />
                                     </div>
